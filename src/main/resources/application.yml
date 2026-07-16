@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: enterprise-dataops-platform-ui
+
+  thymeleaf:
+    cache: false
+
+server:
+  port: ${PORT:8084}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - info
+
+  endpoint:
+    health:
+      show-details: always
+
+dataops:
+  api:
+    base-url: ${DATAOPS_API_URL:https://jarvis-reconciliation-agent-913797829604.us-central1.run.app}
+
+  gemini:
+    enabled: ${GEMINI_COPILOT_ENABLED:true}

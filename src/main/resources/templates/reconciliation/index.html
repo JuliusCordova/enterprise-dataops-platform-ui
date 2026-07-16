@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+
+<html
+    lang="es"
+    xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1">
+
+    <title>
+        Data Reconciliation | Enterprise DataOps
+    </title>
+
+    <link
+        rel="stylesheet"
+        th:href="@{/css/platform.css}">
+
+    <link
+        rel="stylesheet"
+        th:href="@{/css/enterprise-theme.css}">
+
+</head>
+
+<body>
+
+<div class="enterprise-shell">
+
+    <aside
+        th:replace="~{fragments/layout :: sidebar('reconciliation')}">
+    </aside>
+
+    <main class="enterprise-main">
+
+        <header
+            th:replace="~{fragments/layout :: topbar(
+                'Data Reconciliation',
+                'Ejecuta cuadraturas y valida diferencias entre origen y destino'
+            )}">
+        </header>
+
+        <section class="reconciliation-workspace">
+
+            <article class="reconciliation-catalog">
+
+                <header class="panel-header">
+
+                    <div>
+
+                        <span class="panel-eyebrow">
+                            CONFIGURACIONES ACTIVAS
+                        </span>
+
+                        <h2>
+                            Catálogo de cuadraturas
+                        </h2>
+
+                    </div>
+
+                    <span
+                        id="reconciliation-count"
+                        class="neutral-chip">
+                        0 configuraciones
+                    </span>
+
+                </header>
+
+                <div class="reconciliation-toolbar">
+
+                    <input
+                        id="reconciliation-search"
+                        type="search"
+                        placeholder="Buscar por proceso, dominio, origen o destino">
+
+                    <select id="reconciliation-domain-filter">
+
+                        <option value="">
+                            Todos los dominios
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div
+                    id="reconciliation-loading"
+                    class="execution-loading">
+
+                    Cargando configuraciones…
+
+                </div>
+
+                <div
+                    id="reconciliation-list"
+                    class="reconciliation-list">
+                </div>
+
+                <div
+                    id="reconciliation-empty"
+                    class="rules-list-empty"
+                    hidden>
+
+                    <strong>
+                        No hay cuadraturas disponibles
+                    </strong>
+
+                    <p>
+                        No se encontraron configuraciones activas
+                        en el backend.
+                    </p>
+
+                </div>
+
+            </article>
+
+            <aside class="reconciliation-side-panel">
+
+                <header class="gemini-panel-header">
+
+                    <div class="gemini-symbol">
+                        ✦
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Gemini Reconciliation Agent
+                        </strong>
+
+                        <span>
+                            Ejecución y explicación asistida
+                        </span>
+
+                    </div>
+
+                </header>
+
+                <div class="reconciliation-side-content">
+
+                    <section>
+
+                        <span class="panel-eyebrow">
+                            EJECUCIÓN A DEMANDA
+                        </span>
+
+                        <h2>
+                            Preparar cuadratura
+                        </h2>
+
+                        <p id="reconciliation-assistant-message">
+                            Selecciona una configuración del catálogo.
+                        </p>
+
+                    </section>
+
+                    <div
+                        id="selected-reconciliation-summary"
+                        class="selected-config-summary"
+                        hidden>
+
+                        <span>Proceso</span>
+
+                        <strong id="selected-reconciliation-name">
+                            —
+                        </strong>
+
+                        <span>Origen</span>
+
+                        <strong id="selected-reconciliation-source">
+                            —
+                        </strong>
+
+                        <span>Destino</span>
+
+                        <strong id="selected-reconciliation-target">
+                            —
+                        </strong>
+
+                    </div>
+
+                    <div class="form-field">
+
+                        <label for="reconciliation-business-date">
+                            Fecha de negocio
+                        </label>
+
+                        <input
+                            id="reconciliation-business-date"
+                            type="date"
+                            required>
+
+                    </div>
+
+                    <div class="form-field">
+
+                        <label for="reconciliation-requested-by">
+                            Solicitado por
+                        </label>
+
+                        <input
+                            id="reconciliation-requested-by"
+                            type="email"
+                            value="julio.cordova@gmail.com">
+
+                    </div>
+
+                    <button
+                        id="execute-reconciliation-button"
+                        class="enterprise-button enterprise-button-primary full-width-action"
+                        type="button"
+                        disabled>
+
+                        Ejecutar cuadratura
+
+                    </button>
+
+                    <div
+                        id="reconciliation-message"
+                        class="message"
+                        hidden>
+                    </div>
+
+                    <div class="gemini-divider">
+                    </div>
+
+                    <section>
+
+                        <span class="panel-eyebrow">
+                            CONSULTA EN LENGUAJE NATURAL
+                        </span>
+
+                        <h3>
+                            Pregunta al agente
+                        </h3>
+
+                        <textarea
+                            id="reconciliation-question"
+                            rows="4"
+                            placeholder="Ej. Ejecuta la cuadratura de ventas para hoy">
+                        </textarea>
+
+                        <button
+                            id="ask-reconciliation-button"
+                            class="enterprise-button enterprise-button-secondary full-width-action"
+                            type="button">
+
+                            Consultar agente
+
+                        </button>
+
+                        <div
+                            id="reconciliation-agent-response"
+                            class="agent-response"
+                            hidden>
+                        </div>
+
+                    </section>
+
+                </div>
+
+            </aside>
+
+        </section>
+
+        <footer
+            th:replace="~{fragments/layout :: footer}">
+        </footer>
+
+    </main>
+
+</div>
+
+<script
+    th:src="@{/js/reconciliation/catalog.js}">
+</script>
+
+</body>
+
+</html>

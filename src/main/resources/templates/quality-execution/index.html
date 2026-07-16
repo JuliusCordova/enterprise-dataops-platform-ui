@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html
+    lang="es"
+    xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1">
+
+    <title>
+        Quality Execution | Enterprise DataOps
+    </title>
+
+    <link
+        rel="stylesheet"
+        th:href="@{/css/platform.css}">
+</head>
+
+<body>
+
+<div class="platform-shell">
+
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-symbol">D</div>
+
+            <div>
+                <strong>Enterprise DataOps</strong>
+                <span>Agent Platform</span>
+            </div>
+        </div>
+
+        <nav class="navigation">
+
+            <a
+                class="navigation-item"
+                th:href="@{/}">
+                Inicio
+            </a>
+
+            <a
+                class="navigation-item"
+                th:href="@{/profiling}">
+                Data Profiling
+            </a>
+
+            <a
+                class="navigation-item"
+                th:href="@{/quality-rules}">
+                Quality Rules
+            </a>
+
+            <a
+                class="navigation-item active"
+                th:href="@{/quality-execution}">
+                Quality Execution
+            </a>
+
+            <span class="navigation-item disabled">
+                Reports
+            </span>
+
+            <span class="navigation-item disabled">
+                Dashboard
+            </span>
+
+        </nav>
+
+        <div class="sidebar-footer">
+            <span class="online-indicator"></span>
+
+            <div>
+                <strong>Gemini Copilot</strong>
+                <small>Disponible</small>
+            </div>
+        </div>
+
+    </aside>
+
+    <main class="content quality-execution-page">
+
+        <header class="report-topbar">
+
+            <div>
+                <div class="report-breadcrumb">
+                    Data Quality / Execution
+                </div>
+
+                <span class="eyebrow">
+                    QUALITY ASSESSMENT
+                </span>
+
+                <h1>
+                    Ejecuta controles de calidad publicados
+                </h1>
+
+                <p>
+                    Selecciona una configuración activa y evalúa
+                    la tabla sin repetir el proceso de perfilado.
+                </p>
+            </div>
+
+            <div class="avatar">JC</div>
+
+        </header>
+
+        <section class="execution-layout">
+
+            <article class="execution-catalog-panel">
+
+                <header class="panel-header">
+
+                    <div>
+                        <span class="panel-eyebrow">
+                            CONFIGURACIONES ACTIVAS
+                        </span>
+
+                        <h2>
+                            Catálogo de controles
+                        </h2>
+                    </div>
+
+                    <span
+                        id="config-count"
+                        class="neutral-chip">
+                        0 configuraciones
+                    </span>
+
+                </header>
+
+                <div class="execution-toolbar">
+
+                    <input
+                        id="config-search"
+                        type="search"
+                        placeholder="Buscar por nombre, dataset o tabla">
+
+                    <select id="domain-filter">
+                        <option value="">
+                            Todos los dominios
+                        </option>
+                    </select>
+
+                </div>
+
+                <div
+                    id="config-loading"
+                    class="execution-loading">
+                    Cargando configuraciones…
+                </div>
+
+                <div
+                    id="config-list"
+                    class="execution-config-list">
+                </div>
+
+                <div
+                    id="config-empty"
+                    class="rules-list-empty"
+                    hidden>
+
+                    <strong>
+                        No hay configuraciones disponibles
+                    </strong>
+
+                    <p>
+                        Publica primero una configuración desde
+                        Quality Rules.
+                    </p>
+
+                </div>
+
+            </article>
+
+            <aside class="execution-run-panel">
+
+                <header class="gemini-panel-header">
+
+                    <div class="gemini-symbol">✦</div>
+
+                    <div>
+                        <strong>
+                            Gemini Quality Analyst
+                        </strong>
+
+                        <span>
+                            Ejecución asistida
+                        </span>
+                    </div>
+
+                </header>
+
+                <div class="execution-run-content">
+
+                    <h2>
+                        Preparar evaluación
+                    </h2>
+
+                    <p id="execution-assistant-message">
+                        Selecciona una configuración activa del catálogo.
+                    </p>
+
+                    <div
+                        id="selected-config-summary"
+                        class="selected-config-summary"
+                        hidden>
+
+                        <span>Configuración</span>
+                        <strong id="selected-config-name">—</strong>
+
+                        <span>Tabla</span>
+                        <strong id="selected-config-table">—</strong>
+
+                        <span>Dominio</span>
+                        <strong id="selected-config-domain">—</strong>
+
+                    </div>
+
+                    <div class="form-field">
+
+                        <label for="business-date">
+                            Fecha de negocio
+                        </label>
+
+                        <input
+                            id="business-date"
+                            type="date">
+
+                        <small>
+                            Opcional. Déjala vacía para evaluar
+                            toda la tabla según la configuración.
+                        </small>
+
+                    </div>
+
+                    <div class="form-field">
+
+                        <label for="execution-mode">
+                            Modo
+                        </label>
+
+                        <select id="execution-mode">
+                            <option value="ON_DEMAND">
+                                A demanda
+                            </option>
+                        </select>
+
+                    </div>
+
+                    <div class="form-field">
+
+                        <label for="execution-requested-by">
+                            Solicitado por
+                        </label>
+
+                        <input
+                            id="execution-requested-by"
+                            type="email"
+                            value="julio.cordova@gmail.com">
+                    </div>
+
+                    <button
+                        id="execute-quality-button"
+                        class="primary-action full-width-action"
+                        type="button"
+                        disabled>
+                        Ejecutar evaluación
+                    </button>
+
+                    <div
+                        id="execution-message"
+                        class="message"
+                        hidden>
+                    </div>
+
+                </div>
+
+            </aside>
+
+        </section>
+
+    </main>
+
+</div>
+
+<script
+    th:src="@{/js/quality-execution/catalog.js}">
+</script>
+
+</body>
+</html>

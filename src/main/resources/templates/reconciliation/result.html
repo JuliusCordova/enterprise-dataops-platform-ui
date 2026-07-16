@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+
+<html
+    lang="es"
+    xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1">
+
+    <title>
+        Reconciliation Result | Enterprise DataOps
+    </title>
+
+    <link
+        rel="stylesheet"
+        th:href="@{/css/platform.css}">
+
+    <link
+        rel="stylesheet"
+        th:href="@{/css/enterprise-theme.css}">
+
+</head>
+
+<body>
+
+<div class="enterprise-shell">
+
+    <aside
+        th:replace="~{fragments/layout :: sidebar('reconciliation')}">
+    </aside>
+
+    <main class="enterprise-main">
+
+        <header
+            th:replace="~{fragments/layout :: topbar(
+                'Resultado de Reconciliation',
+                'Métricas, diferencias y evidencia de la cuadratura'
+            )}">
+        </header>
+
+        <section
+            id="reconciliation-result-loading"
+            class="report-loading">
+
+            <div class="loading-indicator">
+            </div>
+
+            <div>
+
+                <strong>
+                    Preparando resultado
+                </strong>
+
+                <p>
+                    Consultando métricas, diferencias y estado
+                    de la ejecución.
+                </p>
+
+            </div>
+
+        </section>
+
+        <section
+            id="reconciliation-result-content"
+            hidden>
+
+            <article class="report-hero">
+
+                <div>
+
+                    <span class="report-label">
+                        RECONCILIATION STATUS
+                    </span>
+
+                    <div class="reconciliation-result-status-block">
+
+                        <strong
+                            id="reconciliation-overall-status">
+                            —
+                        </strong>
+
+                    </div>
+
+                    <span
+                        id="reconciliation-status-chip"
+                        class="status-chip">
+                        Calculando
+                    </span>
+
+                </div>
+
+                <div class="hero-summary">
+
+                    <h2 id="reconciliation-process-name">
+                        —
+                    </h2>
+
+                    <p id="reconciliation-executive-summary">
+                        —
+                    </p>
+
+                    <div class="source-path">
+
+                        <span id="reconciliation-result-source">
+                            —
+                        </span>
+
+                        <span>→</span>
+
+                        <strong id="reconciliation-result-target">
+                            —
+                        </strong>
+
+                        <span>·</span>
+
+                        <span id="reconciliation-result-date">
+                            —
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </article>
+
+            <section class="report-metrics">
+
+                <article class="metric-card">
+
+                    <span>
+                        Filas origen
+                    </span>
+
+                    <strong id="metric-source-rows">
+                        —
+                    </strong>
+
+                    <small>
+                        Registros evaluados en origen
+                    </small>
+
+                </article>
+
+                <article class="metric-card">
+
+                    <span>
+                        Filas destino
+                    </span>
+
+                    <strong id="metric-target-rows">
+                        —
+                    </strong>
+
+                    <small>
+                        Registros evaluados en destino
+                    </small>
+
+                </article>
+
+                <article class="metric-card">
+
+                    <span>
+                        Diferencia
+                    </span>
+
+                    <strong id="metric-row-difference">
+                        —
+                    </strong>
+
+                    <small>
+                        Diferencia absoluta de filas
+                    </small>
+
+                </article>
+
+                <article class="metric-card">
+
+                    <span>
+                        Métricas
+                    </span>
+
+                    <strong id="metric-result-count">
+                        —
+                    </strong>
+
+                    <small>
+                        Controles evaluados
+                    </small>
+
+                </article>
+
+                <article class="metric-card">
+
+                    <span>
+                        Duración
+                    </span>
+
+                    <strong id="metric-duration">
+                        —
+                    </strong>
+
+                    <small>
+                        Tiempo de ejecución
+                    </small>
+
+                </article>
+
+            </section>
+
+            <section class="report-layout">
+
+                <article class="report-panel">
+
+                    <header class="panel-header">
+
+                        <div>
+
+                            <span class="panel-eyebrow">
+                                RESULTADO POR MÉTRICA
+                            </span>
+
+                            <h2>
+                                Comparación origen y destino
+                            </h2>
+
+                        </div>
+
+                        <span
+                            id="reconciliation-metric-count"
+                            class="neutral-chip">
+                            0 métricas
+                        </span>
+
+                    </header>
+
+                    <div class="table-wrapper">
+
+                        <table class="profiling-table">
+
+                            <thead>
+
+                                <tr>
+                                    <th>Estado</th>
+                                    <th>Métrica</th>
+                                    <th>Origen</th>
+                                    <th>Destino</th>
+                                    <th>Diferencia</th>
+                                    <th>% diferencia</th>
+                                    <th>Tolerancia</th>
+                                </tr>
+
+                            </thead>
+
+                            <tbody
+                                id="reconciliation-metric-body">
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </article>
+
+                <aside class="gemini-report-panel">
+
+                    <header class="gemini-panel-header">
+
+                        <div class="gemini-symbol">
+                            ✦
+                        </div>
+
+                        <div>
+
+                            <strong>
+                                Gemini Reconciliation Analyst
+                            </strong>
+
+                            <span>
+                                Explicación contextual
+                            </span>
+
+                        </div>
+
+                    </header>
+
+                    <div class="gemini-panel-content">
+
+                        <h3>
+                            Lectura ejecutiva
+                        </h3>
+
+                        <p id="reconciliation-ai-summary">
+                            Preparando explicación…
+                        </p>
+
+                        <div class="gemini-divider">
+                        </div>
+
+                        <h3>
+                            Recomendación
+                        </h3>
+
+                        <p id="reconciliation-ai-recommendation">
+                            —
+                        </p>
+
+                    </div>
+
+                </aside>
+
+            </section>
+
+            <section class="findings-section">
+
+                <header class="panel-header">
+
+                    <div>
+
+                        <span class="panel-eyebrow">
+                            DIFERENCIAS
+                        </span>
+
+                        <h2>
+                            Registros que requieren revisión
+                        </h2>
+
+                    </div>
+
+                    <span
+                        id="reconciliation-difference-count"
+                        class="neutral-chip">
+                        0 diferencias
+                    </span>
+
+                </header>
+
+                <div
+                    id="reconciliation-difference-content"
+                    class="issues-content">
+                </div>
+
+            </section>
+
+            <section class="reconciliation-execution-details">
+
+                <header class="panel-header">
+
+                    <div>
+
+                        <span class="panel-eyebrow">
+                            TRAZABILIDAD
+                        </span>
+
+                        <h2>
+                            Detalle de ejecución
+                        </h2>
+
+                    </div>
+
+                </header>
+
+                <div class="execution-detail-grid">
+
+                    <div>
+                        <span>Execution ID</span>
+                        <strong id="detail-execution-id">—</strong>
+                    </div>
+
+                    <div>
+                        <span>Reconciliation ID</span>
+                        <strong id="detail-reconciliation-id">—</strong>
+                    </div>
+
+                    <div>
+                        <span>Solicitado por</span>
+                        <strong id="detail-requested-by">—</strong>
+                    </div>
+
+                    <div>
+                        <span>Fecha de ejecución</span>
+                        <strong id="detail-execution-date">—</strong>
+                    </div>
+
+                </div>
+
+            </section>
+
+            <footer class="report-footer-actions">
+
+                <a
+                    class="secondary-action"
+                    th:href="@{/reconciliation}">
+                    Volver al catálogo
+                </a>
+
+                <button
+                    id="print-reconciliation-result"
+                    type="button"
+                    class="outline-button">
+                    Preparar informe
+                </button>
+
+                <button
+                    id="execute-reconciliation-again"
+                    type="button"
+                    class="primary-action">
+                    Ejecutar nuevamente
+                </button>
+
+            </footer>
+
+        </section>
+
+        <section
+            id="reconciliation-result-error"
+            class="report-error"
+            hidden>
+
+            <div>
+
+                <strong>
+                    No fue posible mostrar el resultado
+                </strong>
+
+                <p id="reconciliation-result-error-message">
+                    No existe una ejecución disponible.
+                </p>
+
+            </div>
+
+            <a
+                class="primary-action"
+                th:href="@{/reconciliation}">
+                Volver a Data Reconciliation
+            </a>
+
+        </section>
+
+        <footer
+            th:replace="~{fragments/layout :: footer}">
+        </footer>
+
+    </main>
+
+</div>
+
+<script
+    th:src="@{/js/reconciliation/result.js}">
+</script>
+
+</body>
+
+</html>

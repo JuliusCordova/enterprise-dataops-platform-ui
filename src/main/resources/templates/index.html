@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+
+<html
+    lang="es"
+    xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1">
+
+    <title>
+        Enterprise DataOps Agent Platform
+    </title>
+
+    <link
+        rel="stylesheet"
+        th:href="@{/css/platform.css}">
+
+    <link
+        rel="stylesheet"
+        th:href="@{/css/enterprise-theme.css}">
+
+</head>
+
+<body>
+
+<div class="enterprise-shell">
+
+    <aside
+        th:replace="~{fragments/layout :: sidebar('home')}">
+    </aside>
+
+    <main class="enterprise-main">
+
+        <header
+            th:replace="~{fragments/layout :: topbar(
+                'Enterprise DataOps',
+                'Agentes especializados para comprender, validar y reconciliar datos'
+            )}">
+        </header>
+
+        <section class="enterprise-hero">
+
+            <div class="enterprise-hero-copy">
+
+                <span class="enterprise-eyebrow">
+                    AGENTIC DATA OPERATIONS
+                </span>
+
+                <h2>
+                    Convierte operaciones de datos en decisiones confiables
+                </h2>
+
+                <p>
+                    Una plataforma modular para descubrir,
+                    perfilar, validar y reconciliar datos
+                    mediante agentes especializados,
+                    métricas determinísticas y explicaciones
+                    asistidas por Gemini.
+                </p>
+
+                <div class="enterprise-hero-actions">
+
+                    <a
+                        class="enterprise-button enterprise-button-primary"
+                        th:href="@{/profiling}">
+                        Perfilar datos
+                    </a>
+
+                    <a
+                        class="enterprise-button enterprise-button-secondary"
+                        th:href="@{/quality-execution}">
+                        Ejecutar calidad
+                    </a>
+
+                    <a
+                        class="enterprise-button enterprise-button-secondary"
+                        th:href="@{/reconciliation}">
+                        Ejecutar cuadratura
+                    </a>
+
+                </div>
+
+            </div>
+
+            <div
+                class="enterprise-hero-visual"
+                aria-hidden="true">
+
+                <div class="enterprise-orbit enterprise-orbit-one">
+                </div>
+
+                <div class="enterprise-orbit enterprise-orbit-two">
+                </div>
+
+                <div class="enterprise-core-mark">
+                    AI
+                </div>
+
+            </div>
+
+        </section>
+
+        <section class="enterprise-kpi-grid">
+
+            <article class="enterprise-kpi-card">
+
+                <span>
+                    Agentes disponibles
+                </span>
+
+                <strong>
+                    4
+                </strong>
+
+                <small>
+                    Profiling, reglas, ejecución y cuadratura
+                </small>
+
+            </article>
+
+            <article class="enterprise-kpi-card">
+
+                <span>
+                    Fuentes conectadas
+                </span>
+
+                <strong>
+                    BigQuery
+                </strong>
+
+                <small>
+                    Arquitectura preparada para nuevas fuentes
+                </small>
+
+            </article>
+
+            <article class="enterprise-kpi-card">
+
+                <span>
+                    Ejecución
+                </span>
+
+                <strong>
+                    On demand
+                </strong>
+
+                <small>
+                    Programación periódica en roadmap
+                </small>
+
+            </article>
+
+            <article class="enterprise-kpi-card">
+
+                <span>
+                    Explicabilidad
+                </span>
+
+                <strong>
+                    Gemini
+                </strong>
+
+                <small>
+                    Evidencia técnica y lectura ejecutiva
+                </small>
+
+            </article>
+
+        </section>
+
+        <section class="enterprise-section">
+
+            <header class="enterprise-section-heading">
+
+                <div>
+
+                    <span class="enterprise-eyebrow">
+                        AGENTES ESPECIALIZADOS
+                    </span>
+
+                    <h2>
+                        Selecciona una capacidad
+                    </h2>
+
+                </div>
+
+            </header>
+
+            <div class="enterprise-agent-grid">
+
+                <a
+                    class="enterprise-agent-card enabled"
+                    th:href="@{/profiling}">
+
+                    <span class="enterprise-badge enterprise-badge-available">
+                        DISPONIBLE
+                    </span>
+
+                    <div class="enterprise-agent-card-icon">
+                        ◫
+                    </div>
+
+                    <h3>
+                        Data Profiling
+                    </h3>
+
+                    <p>
+                        Descubre estructura, completitud,
+                        cardinalidad, rangos y posibles claves
+                        antes de utilizar una tabla.
+                    </p>
+
+                    <span class="enterprise-agent-card-action">
+                        Abrir agente →
+                    </span>
+
+                </a>
+
+                <a
+                    class="enterprise-agent-card enabled"
+                    th:href="@{/quality-rules}">
+
+                    <span class="enterprise-badge enterprise-badge-available">
+                        DISPONIBLE
+                    </span>
+
+                    <div class="enterprise-agent-card-icon">
+                        ✓
+                    </div>
+
+                    <h3>
+                        Quality Rules
+                    </h3>
+
+                    <p>
+                        Diseña, valida y publica reglas
+                        reutilizables con umbrales y parámetros
+                        adaptados a cada columna.
+                    </p>
+
+                    <span class="enterprise-agent-card-action">
+                        Abrir agente →
+                    </span>
+
+                </a>
+
+                <a
+                    class="enterprise-agent-card enabled"
+                    th:href="@{/quality-execution}">
+
+                    <span class="enterprise-badge enterprise-badge-available">
+                        DISPONIBLE
+                    </span>
+
+                    <div class="enterprise-agent-card-icon">
+                        ▶
+                    </div>
+
+                    <h3>
+                        Quality Execution
+                    </h3>
+
+                    <p>
+                        Ejecuta configuraciones publicadas,
+                        analiza resultados por regla y consulta
+                        incidencias sin repetir el profiling.
+                    </p>
+
+                    <span class="enterprise-agent-card-action">
+                        Abrir agente →
+                    </span>
+
+                </a>
+
+                <a
+                    class="enterprise-agent-card enabled"
+                    th:href="@{/reconciliation}">
+
+                    <span class="enterprise-badge enterprise-badge-available">
+                        INTEGRACIÓN
+                    </span>
+
+                    <div class="enterprise-agent-card-icon">
+                        ⇄
+                    </div>
+
+                    <h3>
+                        Data Reconciliation
+                    </h3>
+
+                    <p>
+                        Ejecuta cuadraturas entre origen y
+                        destino, revisa diferencias y obtén una
+                        explicación ejecutiva asistida.
+                    </p>
+
+                    <span class="enterprise-agent-card-action">
+                        Abrir agente →
+                    </span>
+
+                </a>
+
+                <article class="enterprise-agent-card">
+
+                    <div class="enterprise-agent-card-icon">
+                        ▤
+                    </div>
+
+                    <h3>
+                        Reports
+                    </h3>
+
+                    <p>
+                        Consolida perfilados, evaluaciones,
+                        cuadraturas e incidencias en informes
+                        empresariales.
+                    </p>
+
+                </article>
+
+                <article class="enterprise-agent-card">
+
+                    <div class="enterprise-agent-card-icon">
+                        ◇
+                    </div>
+
+                    <h3>
+                        AgentOps
+                    </h3>
+
+                    <p>
+                        Monitorea ejecuciones, latencia,
+                        trazabilidad, uso de Gemini y consumo
+                        operativo de los agentes.
+                    </p>
+
+                </article>
+
+            </div>
+
+        </section>
+
+        <footer
+            th:replace="~{fragments/layout :: footer}">
+        </footer>
+
+    </main>
+
+</div>
+
+</body>
+
+</html>

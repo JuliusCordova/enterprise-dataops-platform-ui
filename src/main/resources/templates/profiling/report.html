@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+
+<html
+    lang="es"
+    xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1">
+
+    <title>
+        Profiling Report | Enterprise DataOps
+    </title>
+
+    <link
+        rel="stylesheet"
+        th:href="@{/css/platform.css}">
+
+</head>
+
+<body>
+
+<div class="platform-shell">
+
+    <aside class="sidebar">
+
+        <div class="brand">
+
+            <div class="brand-symbol">
+                D
+            </div>
+
+            <div>
+                <strong>
+                    Enterprise DataOps
+                </strong>
+
+                <span>
+                    Agent Platform
+                </span>
+            </div>
+
+        </div>
+
+        <nav class="navigation">
+
+            <a
+                class="navigation-item"
+                th:href="@{/}">
+                Inicio
+            </a>
+
+            <a
+                class="navigation-item active"
+                th:href="@{/profiling}">
+                Data Profiling
+            </a>
+
+            <span class="navigation-item disabled">
+                Quality Rules
+            </span>
+
+            <span class="navigation-item disabled">
+                Reconciliation
+            </span>
+
+            <span class="navigation-item disabled">
+                CRISP-DM
+            </span>
+
+            <span class="navigation-item disabled">
+                Machine Learning
+            </span>
+
+        </nav>
+
+        <div class="sidebar-footer">
+
+            <span class="online-indicator"></span>
+
+            <div>
+                <strong>Gemini Copilot</strong>
+                <small>Disponible</small>
+            </div>
+
+        </div>
+
+    </aside>
+
+    <main class="content profiling-report-page">
+
+        <header class="report-topbar">
+
+            <div>
+
+                <div class="report-breadcrumb">
+                    Data Profiling / Informe
+                </div>
+
+                <span class="eyebrow">
+                    PASO 2 Y 3 DE 3
+                </span>
+
+                <h1>
+                    Informe inteligente de perfilado
+                </h1>
+
+                <p>
+                    Comprende la salud inicial de la tabla,
+                    sus principales hallazgos y las acciones
+                    recomendadas.
+                </p>
+
+            </div>
+
+            <div class="report-header-actions">
+
+                <a
+                    class="secondary-action"
+                    th:href="@{/profiling}">
+                    Analizar otra tabla
+                </a>
+
+                <div class="avatar">
+                    JC
+                </div>
+
+            </div>
+
+        </header>
+
+        <section
+            id="report-loading"
+            class="report-loading">
+
+            <div class="loading-indicator"></div>
+
+            <div>
+                <strong>
+                    Preparando el informe
+                </strong>
+
+                <p>
+                    Interpretando métricas y generando
+                    recomendaciones.
+                </p>
+            </div>
+
+        </section>
+
+        <section
+            id="report-content"
+            hidden>
+
+            <article class="report-hero">
+
+                <div>
+
+                    <span class="report-label">
+                        DATA READINESS SCORE
+                    </span>
+
+                    <div class="score-container">
+
+                        <strong id="overall-score">
+                            —
+                        </strong>
+
+                        <span>/ 100</span>
+
+                    </div>
+
+                    <div
+                        id="overall-status"
+                        class="status-chip">
+                        Calculando
+                    </div>
+
+                </div>
+
+                <div class="hero-summary">
+
+                    <h2 id="table-title">
+                        —
+                    </h2>
+
+                    <p id="executive-summary">
+                        —
+                    </p>
+
+                    <div class="source-path">
+
+                        <span id="source-connection">
+                            —
+                        </span>
+
+                        <span>→</span>
+
+                        <span id="source-dataset">
+                            —
+                        </span>
+
+                        <span>→</span>
+
+                        <strong id="source-table">
+                            —
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </article>
+
+            <section class="report-metrics">
+
+                <article class="metric-card">
+                    <span>Registros</span>
+                    <strong id="metric-rows">—</strong>
+                    <small>Filas evaluadas</small>
+                </article>
+
+                <article class="metric-card">
+                    <span>Columnas</span>
+                    <strong id="metric-columns">—</strong>
+                    <small>Campos perfilados</small>
+                </article>
+
+                <article class="metric-card">
+                    <span>Completitud</span>
+                    <strong id="metric-completeness">—</strong>
+                    <small>Promedio de datos presentes</small>
+                </article>
+
+                <article class="metric-card">
+                    <span>Posibles claves</span>
+                    <strong id="metric-keys">—</strong>
+                    <small>Alta unicidad</small>
+                </article>
+
+                <article class="metric-card">
+                    <span>Observaciones</span>
+                    <strong id="metric-warnings">—</strong>
+                    <small>Columnas que requieren revisión</small>
+                </article>
+
+            </section>
+
+            <section class="report-layout">
+
+                <article class="report-panel">
+
+                    <header class="panel-header">
+
+                        <div>
+                            <span class="panel-eyebrow">
+                                HALLAZGOS
+                            </span>
+
+                            <h2>
+                                Salud de las columnas
+                            </h2>
+                        </div>
+
+                        <span
+                            id="profiled-column-count"
+                            class="neutral-chip">
+                            —
+                        </span>
+
+                    </header>
+
+                    <div class="table-wrapper">
+
+                        <table class="profiling-table">
+
+                            <thead>
+                                <tr>
+                                    <th>Columna</th>
+                                    <th>Tipo</th>
+                                    <th>Nulos</th>
+                                    <th>Distintos</th>
+                                    <th>Estado</th>
+                                    <th>Recomendación</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="column-profile-body">
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </article>
+
+                <aside class="gemini-report-panel">
+
+                    <header class="gemini-panel-header">
+
+                        <div class="gemini-symbol">
+                            ✦
+                        </div>
+
+                        <div>
+                            <strong>
+                                Gemini Data Analyst
+                            </strong>
+
+                            <span>
+                                Interpretación contextual
+                            </span>
+                        </div>
+
+                    </header>
+
+                    <div class="gemini-panel-content">
+
+                        <h3>
+                            Lectura ejecutiva
+                        </h3>
+
+                        <p id="gemini-summary">
+                            Preparando análisis…
+                        </p>
+
+                        <div class="gemini-divider"></div>
+
+                        <h3>
+                            Acciones recomendadas
+                        </h3>
+
+                        <div
+                            id="recommendation-list"
+                            class="recommendation-list">
+                        </div>
+
+                    </div>
+
+                </aside>
+
+            </section>
+
+            <section class="findings-section">
+
+                <header class="panel-header">
+
+                    <div>
+                        <span class="panel-eyebrow">
+                            PRIORIZACIÓN
+                        </span>
+
+                        <h2>
+                            Hallazgos principales
+                        </h2>
+                    </div>
+
+                </header>
+
+                <div
+                    id="findings-grid"
+                    class="findings-grid">
+                </div>
+
+            </section>
+
+            <footer class="report-footer-actions">
+
+                <a
+                    class="secondary-action"
+                    th:href="@{/profiling}">
+                    Volver al descubrimiento
+                </a>
+
+                <button
+                    id="download-report-button"
+                    class="outline-button"
+                    type="button">
+                    Preparar informe
+                </button>
+
+                <button
+                    id="continue-rules-button"
+                    class="primary-action"
+                    type="button">
+                    Crear reglas recomendadas
+                </button>
+
+            </footer>
+
+        </section>
+
+        <section
+            id="report-error"
+            class="report-error"
+            hidden>
+
+            <strong>
+                No fue posible preparar el informe
+            </strong>
+
+            <p id="report-error-message">
+                No se encontró el resultado del perfilado.
+            </p>
+
+            <a
+                class="primary-action"
+                th:href="@{/profiling}">
+                Ejecutar un nuevo perfilado
+            </a>
+
+        </section>
+
+    </main>
+
+</div>
+
+<script
+    th:src="@{/js/profiling/report.js}">
+</script>
+
+</body>
+
+</html>

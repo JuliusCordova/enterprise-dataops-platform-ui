@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html
+    lang="es"
+    xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1">
+
+    <title>
+        Quality Rules | Enterprise DataOps
+    </title>
+
+    <link
+        rel="stylesheet"
+        th:href="@{/css/platform.css}">
+</head>
+
+<body>
+
+<div class="platform-shell">
+
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-symbol">D</div>
+
+            <div>
+                <strong>Enterprise DataOps</strong>
+                <span>Agent Platform</span>
+            </div>
+        </div>
+
+        <nav class="navigation">
+
+            <a
+                class="navigation-item"
+                th:href="@{/}">
+                Inicio
+            </a>
+
+            <a
+                class="navigation-item"
+                th:href="@{/profiling}">
+                Data Profiling
+            </a>
+
+            <a
+                class="navigation-item active"
+                th:href="@{/quality-rules}">
+                Quality Rules
+            </a>
+
+            <a
+                class="navigation-item"
+                th:href="@{/quality-execution}">
+                Quality Execution
+        </a>
+
+            <span class="navigation-item disabled">
+                Reconciliation
+            </span>
+
+            <span class="navigation-item disabled">
+                CRISP-DM
+            </span>
+
+        </nav>
+
+        <div class="sidebar-footer">
+            <span class="online-indicator"></span>
+
+            <div>
+                <strong>Gemini Copilot</strong>
+                <small>Disponible</small>
+            </div>
+        </div>
+
+    </aside>
+
+    <main class="content quality-rules-page">
+
+        <header class="report-topbar">
+
+            <div>
+                <div class="report-breadcrumb">
+                    Data Quality / Quality Rules
+                </div>
+
+                <span class="eyebrow">
+                    RULE DESIGNER
+                </span>
+
+                <h1>
+                    Diseña controles de calidad confiables
+                </h1>
+
+                <p>
+                    Revisa las recomendaciones del perfilado,
+                    selecciona reglas y configura sus umbrales
+                    antes de publicarlas.
+                </p>
+            </div>
+
+            <div class="avatar">JC</div>
+
+        </header>
+
+        <section
+            id="rules-empty-state"
+            class="rules-empty-state"
+            hidden>
+
+            <h2>
+                No existen recomendaciones preparadas
+            </h2>
+
+            <p>
+                Ejecuta primero el perfilado de una tabla para
+                generar reglas sugeridas.
+            </p>
+
+            <a
+                class="primary-action"
+                th:href="@{/profiling}">
+                Ir a Data Profiling
+            </a>
+
+        </section>
+
+        <section
+            id="rules-content"
+            hidden>
+
+            <article class="rules-source-card">
+
+                <div>
+                    <span class="panel-eyebrow">
+                        FUENTE ANALIZADA
+                    </span>
+
+                    <h2 id="rules-source-title">
+                        —
+                    </h2>
+
+                    <div class="source-path">
+                        <span id="rules-connection">—</span>
+                        <span>→</span>
+                        <span id="rules-dataset">—</span>
+                        <span>→</span>
+                        <strong id="rules-table">—</strong>
+                    </div>
+                </div>
+
+                <div class="rules-source-actions">
+
+                    <span
+                        id="selected-rule-count"
+                        class="neutral-chip">
+                        0 reglas
+                    </span>
+
+                    <button
+                        id="apply-all-button"
+                        class="outline-button"
+                        type="button">
+                        Aplicar recomendaciones
+                    </button>
+
+                </div>
+
+            </article>
+
+            <section class="rules-layout">
+
+                <article class="rules-designer-panel">
+
+                    <header class="panel-header">
+
+                        <div>
+                            <span class="panel-eyebrow">
+                                CONFIGURACIÓN
+                            </span>
+
+                            <h2>
+                                Reglas por columna
+                            </h2>
+                        </div>
+
+                        <button
+                            id="add-rule-button"
+                            class="outline-button"
+                            type="button">
+                            Agregar regla
+                        </button>
+
+                    </header>
+
+                    <div
+                        id="rules-list"
+                        class="rules-list">
+                    </div>
+
+                </article>
+
+                <aside class="gemini-report-panel">
+
+                    <header class="gemini-panel-header">
+                        <div class="gemini-symbol">✦</div>
+
+                        <div>
+                            <strong>
+                                Gemini Quality Advisor
+                            </strong>
+
+                            <span>
+                                Recomendaciones contextuales
+                            </span>
+                        </div>
+                    </header>
+
+                    <div class="gemini-panel-content">
+
+                        <h3>
+                            Cobertura recomendada
+                        </h3>
+
+                        <p id="rules-ai-summary">
+                            Preparando recomendaciones…
+                        </p>
+
+                        <div class="gemini-divider"></div>
+
+                        <h3>
+                            Checklist de diseño
+                        </h3>
+
+                        <div
+                            id="design-checklist"
+                            class="design-checklist">
+                        </div>
+
+                    </div>
+
+                </aside>
+
+            </section>
+
+            <section class="rules-publication-panel">
+
+                <header class="panel-header">
+
+                    <div>
+                        <span class="panel-eyebrow">
+                            PUBLICACIÓN
+                        </span>
+
+                        <h2>
+                            Información de la configuración
+                        </h2>
+                    </div>
+
+                </header>
+
+                <div class="rules-publication-form">
+
+                    <div class="form-field">
+                        <label for="config-name">
+                            Nombre
+                        </label>
+
+                        <input
+                            id="config-name"
+                            type="text"
+                            maxlength="150"
+                            placeholder="Ej. Calidad de productos Gold">
+                    </div>
+
+                    <div class="form-field">
+                        <label for="config-description">
+                            Descripción
+                        </label>
+
+                        <textarea
+                            id="config-description"
+                            rows="3"
+                            placeholder="Propósito y alcance de las reglas">
+                        </textarea>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="created-by">
+                            Responsable
+                        </label>
+
+                        <input
+                            id="created-by"
+                            type="email"
+                            value="julio.cordova@gmail.com">
+                    </div>
+
+                </div>
+
+                <div
+                    id="rules-message"
+                    class="message"
+                    hidden>
+                </div>
+
+                <footer class="report-footer-actions">
+
+                    <a
+                        class="secondary-action"
+                        th:href="@{/profiling/report}">
+                        Volver al informe
+                    </a>
+
+                    <button
+                        id="save-draft-button"
+                        class="outline-button"
+                        type="button">
+                        Guardar borrador
+                    </button>
+
+                    <button
+                        id="validate-rules-button"
+                        class="primary-action"
+                        type="button"
+                        disabled>
+                        Validar configuración
+                    </button>
+
+                </footer>
+
+            </section>
+
+            <section
+                id="validation-result"
+                class="validation-result"
+                hidden>
+
+                <header class="panel-header">
+
+                    <div>
+                        <span class="panel-eyebrow">
+                            RESULTADO DE VALIDACIÓN
+                        </span>
+
+                        <h2>
+                            Checklist de publicación
+                        </h2>
+                    </div>
+
+                    <span
+                        id="validation-status"
+                        class="neutral-chip">
+                        Pendiente
+                    </span>
+
+                </header>
+
+                <div
+                    id="validation-checklist"
+                    class="validation-checklist">
+                </div>
+
+                <footer class="report-footer-actions">
+
+                    <button
+                        id="confirm-rules-button"
+                        class="primary-action"
+                        type="button"
+                        disabled>
+                        Confirmar y publicar
+                    </button>
+
+                </footer>
+
+            </section>
+
+        </section>
+
+    </main>
+
+</div>
+
+<script
+    th:src="@{/js/quality-rules/designer.js}">
+</script>
+
+</body>
+</html>

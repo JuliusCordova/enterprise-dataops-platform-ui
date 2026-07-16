@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html
+    lang="es"
+    xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1">
+
+    <title>
+        Quality Assessment | Enterprise DataOps
+    </title>
+
+    <link
+        rel="stylesheet"
+        th:href="@{/css/platform.css}">
+</head>
+
+<body>
+
+<div class="platform-shell">
+
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-symbol">D</div>
+
+            <div>
+                <strong>Enterprise DataOps</strong>
+                <span>Agent Platform</span>
+            </div>
+        </div>
+
+        <nav class="navigation">
+
+            <a
+                class="navigation-item"
+                th:href="@{/}">
+                Inicio
+            </a>
+
+            <a
+                class="navigation-item"
+                th:href="@{/profiling}">
+                Data Profiling
+            </a>
+
+            <a
+                class="navigation-item"
+                th:href="@{/quality-rules}">
+                Quality Rules
+            </a>
+
+            <a
+                class="navigation-item active"
+                th:href="@{/quality-execution}">
+                Quality Execution
+            </a>
+
+            <span class="navigation-item disabled">
+                Reports
+            </span>
+
+            <span class="navigation-item disabled">
+                Dashboard
+            </span>
+
+        </nav>
+
+        <div class="sidebar-footer">
+
+            <span class="online-indicator"></span>
+
+            <div>
+                <strong>Gemini Copilot</strong>
+                <small>Disponible</small>
+            </div>
+
+        </div>
+
+    </aside>
+
+    <main class="content quality-result-page">
+
+        <header class="report-topbar">
+
+            <div>
+
+                <div class="report-breadcrumb">
+                    Data Quality / Execution / Result
+                </div>
+
+                <span class="eyebrow">
+                    QUALITY ASSESSMENT
+                </span>
+
+                <h1>
+                    Resultado de la evaluación
+                </h1>
+
+                <p>
+                    Revisa el cumplimiento de cada regla,
+                    las incidencias encontradas y la salud
+                    general de la tabla.
+                </p>
+
+            </div>
+
+            <div class="report-header-actions">
+
+                <a
+                    class="secondary-action"
+                    th:href="@{/quality-execution}">
+                    Nueva ejecución
+                </a>
+
+                <div class="avatar">
+                    JC
+                </div>
+
+            </div>
+
+        </header>
+
+        <section
+            id="quality-result-loading"
+            class="report-loading">
+
+            <div class="loading-indicator"></div>
+
+            <div>
+                <strong>
+                    Preparando resultado
+                </strong>
+
+                <p>
+                    Consultando reglas, métricas e incidencias.
+                </p>
+            </div>
+
+        </section>
+
+        <section
+            id="quality-result-content"
+            hidden>
+
+            <article class="report-hero">
+
+                <div>
+
+                    <span class="report-label">
+                        QUALITY SCORE
+                    </span>
+
+                    <div class="score-container">
+
+                        <strong id="quality-score">
+                            —
+                        </strong>
+
+                        <span>/ 100</span>
+
+                    </div>
+
+                    <span
+                        id="quality-status"
+                        class="status-chip">
+                        Calculando
+                    </span>
+
+                </div>
+
+                <div class="hero-summary">
+
+                    <h2 id="quality-config-name">
+                        —
+                    </h2>
+
+                    <p id="quality-executive-summary">
+                        —
+                    </p>
+
+                    <div class="source-path">
+
+                        <span id="quality-dataset">
+                            —
+                        </span>
+
+                        <span>→</span>
+
+                        <strong id="quality-table">
+                            —
+                        </strong>
+
+                        <span>→</span>
+
+                        <span id="quality-execution-id">
+                            —
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </article>
+
+            <section class="report-metrics">
+
+                <article class="metric-card">
+                    <span>Reglas ejecutadas</span>
+                    <strong id="metric-total-rules">—</strong>
+                    <small>Total evaluado</small>
+                </article>
+
+                <article class="metric-card">
+                    <span>Conformes</span>
+                    <strong id="metric-conforme">—</strong>
+                    <small>Sin incumplimientos</small>
+                </article>
+
+                <article class="metric-card">
+                    <span>Observadas</span>
+                    <strong id="metric-observed">—</strong>
+                    <small>Requieren revisión</small>
+                </article>
+
+                <article class="metric-card">
+                    <span>Críticas</span>
+                    <strong id="metric-critical">—</strong>
+                    <small>Acción prioritaria</small>
+                </article>
+
+                <article class="metric-card">
+                    <span>Incidencias</span>
+                    <strong id="metric-issues">—</strong>
+                    <small>Muestras guardadas</small>
+                </article>
+
+            </section>
+
+            <section class="report-layout">
+
+                <article class="report-panel">
+
+                    <header class="panel-header">
+
+                        <div>
+                            <span class="panel-eyebrow">
+                                CHECKLIST
+                            </span>
+
+                            <h2>
+                                Resultado por regla
+                            </h2>
+                        </div>
+
+                        <span
+                            id="result-rule-count"
+                            class="neutral-chip">
+                            —
+                        </span>
+
+                    </header>
+
+                    <div class="table-wrapper">
+
+                        <table class="profiling-table">
+
+                            <thead>
+                                <tr>
+                                    <th>Estado</th>
+                                    <th>Regla</th>
+                                    <th>Columna</th>
+                                    <th>Evaluados</th>
+                                    <th>Fallidos</th>
+                                    <th>Score</th>
+                                    <th>Resultado</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="quality-rule-result-body">
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </article>
+
+                <aside class="gemini-report-panel">
+
+                    <header class="gemini-panel-header">
+
+                        <div class="gemini-symbol">
+                            ✦
+                        </div>
+
+                        <div>
+                            <strong>
+                                Gemini Quality Analyst
+                            </strong>
+
+                            <span>
+                                Explicación ejecutiva
+                            </span>
+                        </div>
+
+                    </header>
+
+                    <div class="gemini-panel-content">
+
+                        <h3>
+                            Lectura del resultado
+                        </h3>
+
+                        <p id="quality-ai-summary">
+                            Preparando análisis…
+                        </p>
+
+                        <div class="gemini-divider"></div>
+
+                        <h3>
+                            Recomendación
+                        </h3>
+
+                        <p id="quality-ai-recommendation">
+                            —
+                        </p>
+
+                    </div>
+
+                </aside>
+
+            </section>
+
+            <section class="findings-section">
+
+                <header class="panel-header">
+
+                    <div>
+                        <span class="panel-eyebrow">
+                            INCIDENCIAS
+                        </span>
+
+                        <h2>
+                            Registros que requieren atención
+                        </h2>
+                    </div>
+
+                    <span
+                        id="issue-count"
+                        class="neutral-chip">
+                        0 incidencias
+                    </span>
+
+                </header>
+
+                <div
+                    id="issues-content"
+                    class="issues-content">
+                </div>
+
+            </section>
+
+            <footer class="report-footer-actions">
+
+                <a
+                    class="secondary-action"
+                    th:href="@{/quality-execution}">
+                    Volver al catálogo
+                </a>
+
+                <button
+                    id="print-quality-result"
+                    type="button"
+                    class="outline-button">
+                    Preparar informe
+                </button>
+
+                <button
+                    id="execute-again-button"
+                    type="button"
+                    class="primary-action">
+                    Ejecutar nuevamente
+                </button>
+
+            </footer>
+
+        </section>
+
+        <section
+            id="quality-result-error"
+            class="report-error"
+            hidden>
+
+            <div>
+
+                <strong>
+                    No fue posible mostrar el resultado
+                </strong>
+
+                <p id="quality-result-error-message">
+                    No se encontró una ejecución disponible.
+                </p>
+
+            </div>
+
+            <a
+                class="primary-action"
+                th:href="@{/quality-execution}">
+                Volver a Quality Execution
+            </a>
+
+        </section>
+
+    </main>
+
+</div>
+
+<script
+    th:src="@{/js/quality-execution/result.js}">
+</script>
+
+</body>
+</html>

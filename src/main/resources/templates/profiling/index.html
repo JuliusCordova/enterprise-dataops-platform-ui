@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+
+<html
+    lang="es"
+    xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1">
+
+    <title>
+        Data Profiling | Enterprise DataOps
+    </title>
+
+    <link
+        rel="stylesheet"
+        th:href="@{/css/platform.css}">
+
+</head>
+
+<body>
+
+<div class="platform-shell">
+
+    <aside class="sidebar">
+
+        <div class="brand">
+
+            <div class="brand-symbol">
+                D
+            </div>
+
+            <div>
+                <strong>
+                    Enterprise DataOps
+                </strong>
+
+                <span>
+                    Agent Platform
+                </span>
+            </div>
+
+        </div>
+
+        <nav class="navigation">
+
+            <a
+                class="navigation-item"
+                th:href="@{/}">
+                Inicio
+            </a>
+
+            <a
+                class="navigation-item active"
+                th:href="@{/profiling}">
+                Data Profiling
+            </a>
+
+            <span class="navigation-item disabled">
+                Quality Rules
+            </span>
+
+            <span class="navigation-item disabled">
+                Reconciliation
+            </span>
+
+            <span class="navigation-item disabled">
+                CRISP-DM
+            </span>
+
+            <span class="navigation-item disabled">
+                Machine Learning
+            </span>
+
+        </nav>
+
+        <div class="sidebar-footer">
+
+            <span class="online-indicator"></span>
+
+            <div>
+                <strong>
+                    Gemini Copilot
+                </strong>
+
+                <small>
+                    Disponible
+                </small>
+            </div>
+
+        </div>
+
+    </aside>
+
+    <main class="content">
+
+        <header class="topbar">
+
+            <div>
+
+                <span class="eyebrow">
+                    DATA PROFILING
+                </span>
+
+                <h1>
+                    Comprende tus datos antes de usarlos
+                </h1>
+
+                <p>
+                    Selecciona una fuente y ejecuta un análisis
+                    automático de estructura, completitud y
+                    cardinalidad.
+                </p>
+
+            </div>
+
+            <div class="avatar">
+                JC
+            </div>
+
+        </header>
+
+        <section class="module-grid">
+
+            <article class="module-card featured">
+
+                <span class="module-status">
+                    Paso 1 de 3
+                </span>
+
+                <h2>
+                    Selecciona una tabla
+                </h2>
+
+                <form
+                    id="profiling-form"
+                    class="profiling-form">
+
+                    <label for="connection">
+                        Conexión
+                    </label>
+
+                    <select
+                        id="connection"
+                        required>
+
+                        <option value="">
+                            Cargando conexiones...
+                        </option>
+
+                    </select>
+
+                    <label for="dataset">
+                        Dataset
+                    </label>
+
+                    <select
+                        id="dataset"
+                        disabled
+                        required>
+
+                        <option value="">
+                            Selecciona una conexión
+                        </option>
+
+                    </select>
+
+                    <label for="table">
+                        Tabla
+                    </label>
+
+                    <select
+                        id="table"
+                        disabled
+                        required>
+
+                        <option value="">
+                            Selecciona un dataset
+                        </option>
+
+                    </select>
+
+                    <button
+                        id="profile-button"
+                        type="submit"
+                        disabled>
+
+                        Analizar tabla
+
+                    </button>
+
+                </form>
+
+                <div
+                    id="profiling-message"
+                    class="message"
+                    hidden>
+                </div>
+
+            </article>
+
+            <aside class="module-card">
+
+                <span class="module-status muted">
+                    Gemini Copilot
+                </span>
+
+                <h2>
+                    Qué analizaré
+                </h2>
+
+                <p>
+                    El perfilado revisará valores nulos,
+                    cardinalidad, unicidad, rangos,
+                    distribuciones y posibles claves.
+                </p>
+
+                <p>
+                    Las recomendaciones se generarán después
+                    utilizando únicamente los resultados reales
+                    del backend.
+                </p>
+
+            </aside>
+
+        </section>
+
+        <section
+            id="profiling-result"
+            class="profiling-result"
+            hidden>
+
+            <header class="result-header">
+
+                <div>
+                    <span class="eyebrow">
+                        RESULTADO TÉCNICO
+                    </span>
+
+                    <h2>
+                        Perfilado completado
+                    </h2>
+                </div>
+
+                <span class="module-status">
+                    Conforme
+                </span>
+
+            </header>
+
+            <div
+                id="profiling-result-content">
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<script
+    th:src="@{/js/profiling/discovery.js}">
+</script>
+
+</body>
+
+</html>

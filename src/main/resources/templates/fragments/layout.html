@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+
+<html
+    lang="es"
+    xmlns:th="http://www.thymeleaf.org">
+
+<body>
+
+<aside
+    th:fragment="sidebar(activeModule)"
+    class="platform-sidebar">
+
+    <a
+        class="platform-brand"
+        th:href="@{/}"
+        aria-label="Ir al inicio">
+
+        <div class="platform-brand-mark">
+            D
+        </div>
+
+        <div class="platform-brand-copy">
+
+            <strong>
+                Enterprise DataOps
+            </strong>
+
+            <span>
+                Agent Platform
+            </span>
+
+        </div>
+
+    </a>
+
+    <nav
+        class="platform-navigation"
+        aria-label="Navegación principal">
+
+        <a
+            th:href="@{/}"
+            th:classappend="${activeModule == 'home'} ? ' active' : ''">
+
+            <span class="platform-nav-icon">
+                ⌂
+            </span>
+
+            <span>
+                Inicio
+            </span>
+
+        </a>
+
+        <a
+            th:href="@{/profiling}"
+            th:classappend="${activeModule == 'profiling'} ? ' active' : ''">
+
+            <span class="platform-nav-icon">
+                ◫
+            </span>
+
+            <span>
+                Data Profiling
+            </span>
+
+        </a>
+
+        <a
+            th:href="@{/quality-rules}"
+            th:classappend="${activeModule == 'quality-rules'} ? ' active' : ''">
+
+            <span class="platform-nav-icon">
+                ✓
+            </span>
+
+            <span>
+                Quality Rules
+            </span>
+
+        </a>
+
+        <a
+            th:href="@{/quality-execution}"
+            th:classappend="${activeModule == 'quality-execution'} ? ' active' : ''">
+
+            <span class="platform-nav-icon">
+                ▶
+            </span>
+
+            <span>
+                Quality Execution
+            </span>
+
+        </a>
+
+        <a
+            th:href="@{/reconciliation}"
+            th:classappend="${activeModule == 'reconciliation'} ? ' active' : ''">
+
+            <span class="platform-nav-icon">
+                ⇄
+            </span>
+
+            <span>
+                Data Reconciliation
+            </span>
+
+        </a>
+
+        <span class="platform-navigation-label">
+            Gobierno y operación
+        </span>
+
+        <a
+            href="#"
+            class="navigation-disabled"
+            aria-disabled="true">
+
+            <span class="platform-nav-icon">
+                ▤
+            </span>
+
+            <span>
+                Reports
+            </span>
+
+        </a>
+
+        <a
+            href="#"
+            class="navigation-disabled"
+            aria-disabled="true">
+
+            <span class="platform-nav-icon">
+                ◇
+            </span>
+
+            <span>
+                AgentOps
+            </span>
+
+        </a>
+
+    </nav>
+
+    <div class="platform-sidebar-footer">
+
+        <span class="platform-environment-dot">
+        </span>
+
+        <div>
+
+            <strong>
+                Backend operativo
+            </strong>
+
+            <small>
+                Cloud Run · BigQuery · Gemini
+            </small>
+
+        </div>
+
+    </div>
+
+</aside>
+
+
+<header
+    th:fragment="topbar(title, subtitle)"
+    class="platform-topbar">
+
+    <div>
+
+        <h1 th:text="${title}">
+            Enterprise DataOps
+        </h1>
+
+        <p th:text="${subtitle}">
+            Plataforma de agentes de datos
+        </p>
+
+    </div>
+
+    <div class="platform-topbar-actions">
+
+        <span class="platform-status-pill">
+
+            <span class="platform-status-dot">
+            </span>
+
+            Servicios disponibles
+
+        </span>
+
+        <div class="platform-user-avatar">
+            JC
+        </div>
+
+    </div>
+
+</header>
+
+
+<footer
+    th:fragment="footer"
+    class="platform-footer">
+
+    <span>
+        Enterprise DataOps Agent Platform
+    </span>
+
+    <span>
+        Profiling · Quality · Reconciliation · Gemini
+    </span>
+
+</footer>
+
+</body>
+
+</html>
