@@ -120,40 +120,41 @@ backend_url = sys.argv[3]
 doc = json.loads(openapi_path.read_text(encoding="utf-8"))
 paths = doc.get("paths", {})
 
+# domain, method, canonical path, accepted aliases
 expected = [
-    ("Profiling", "GET", "/connections"),
-    ("Profiling", "GET", "/metadata/{connection_id}/datasets"),
-    ("Profiling", "GET", "/metadata/{connection_id}/{dataset_id}/tables"),
-    ("Profiling", "GET", "/metadata/{connection_id}/{dataset_id}/{table_id}/columns"),
-    ("Profiling", "POST", "/profiling/execute"),
-    ("Profiling", "POST", "/profiling/profile"),
-    ("Quality", "GET", "/data-quality/rule-types"),
-    ("Quality", "POST", "/data-quality/configure/draft"),
-    ("Quality", "GET", "/data-quality/configure/draft/{draft_id}"),
-    ("Quality", "PUT", "/data-quality/configure/draft/{draft_id}"),
-    ("Quality", "POST", "/data-quality/configure/validate/{draft_id}"),
-    ("Quality", "POST", "/data-quality/configure/confirm/{draft_id}"),
-    ("Quality", "GET", "/data-quality/configurations"),
-    ("Quality", "GET", "/data-quality/configurations/{id}"),
-    ("Quality", "POST", "/data-quality/configurations/{id}/versions"),
-    ("Quality", "PATCH", "/data-quality/configurations/{id}/status"),
-    ("Quality", "DELETE", "/data-quality/configurations/{id}"),
-    ("Quality", "GET", "/data-quality/configurations/{id}/versions"),
-    ("Reconciliation", "GET", "/reconciliation/configs"),
-    ("Reconciliation", "POST", "/reconciliation/configure/draft"),
-    ("Reconciliation", "GET", "/reconciliation/configure/draft/{draft_id}"),
-    ("Reconciliation", "PUT", "/reconciliation/configure/draft/{draft_id}"),
-    ("Reconciliation", "POST", "/reconciliation/configure/validate/{draft_id}"),
-    ("Reconciliation", "POST", "/reconciliation/configure/confirm/{draft_id}"),
-    ("Reconciliation", "POST", "/reconciliation/execute"),
-    ("Reconciliation", "GET", "/reconciliation/result/{execution_id}"),
-    ("Reconciliation", "POST", "/reconciliation/ask"),
-    ("Reconciliation", "GET", "/reconciliation/configurations"),
-    ("Reconciliation", "GET", "/reconciliation/configurations/{id}"),
-    ("Reconciliation", "POST", "/reconciliation/configurations/{id}/versions"),
-    ("Reconciliation", "PATCH", "/reconciliation/configurations/{id}/status"),
-    ("Reconciliation", "DELETE", "/reconciliation/configurations/{id}"),
-    ("Reconciliation", "GET", "/reconciliation/configurations/{id}/versions"),
+    ("Profiling", "GET", "/connections", []),
+    ("Profiling", "GET", "/metadata/{connection_id}/datasets", []),
+    ("Profiling", "GET", "/metadata/{connection_id}/{dataset_id}/tables", []),
+    ("Profiling", "GET", "/metadata/{connection_id}/{dataset_id}/{table_id}/columns", []),
+    ("Profiling", "POST", "/profiling/execute", ["/data-quality/profile"]),
+    ("Profiling", "POST", "/profiling/profile", ["/data-quality/profile"]),
+    ("Quality", "GET", "/data-quality/rule-types", []),
+    ("Quality", "POST", "/data-quality/configure/draft", []),
+    ("Quality", "GET", "/data-quality/configure/draft/{draft_id}", []),
+    ("Quality", "PUT", "/data-quality/configure/draft/{draft_id}", []),
+    ("Quality", "POST", "/data-quality/configure/validate/{draft_id}", []),
+    ("Quality", "POST", "/data-quality/configure/confirm/{draft_id}", []),
+    ("Quality", "GET", "/data-quality/configurations", ["/data-quality/configs"]),
+    ("Quality", "GET", "/data-quality/configurations/{id}", ["/data-quality/config/{quality_config_id}"]),
+    ("Quality", "POST", "/data-quality/configurations/{id}/versions", []),
+    ("Quality", "PATCH", "/data-quality/configurations/{id}/status", []),
+    ("Quality", "DELETE", "/data-quality/configurations/{id}", []),
+    ("Quality", "GET", "/data-quality/configurations/{id}/versions", []),
+    ("Reconciliation", "GET", "/reconciliation/configs", []),
+    ("Reconciliation", "POST", "/reconciliation/configure/draft", []),
+    ("Reconciliation", "GET", "/reconciliation/configure/draft/{draft_id}", []),
+    ("Reconciliation", "PUT", "/reconciliation/configure/draft/{draft_id}", []),
+    ("Reconciliation", "POST", "/reconciliation/configure/validate/{draft_id}", []),
+    ("Reconciliation", "POST", "/reconciliation/configure/confirm/{draft_id}", []),
+    ("Reconciliation", "POST", "/reconciliation/execute", []),
+    ("Reconciliation", "GET", "/reconciliation/result/{execution_id}", []),
+    ("Reconciliation", "POST", "/reconciliation/ask", []),
+    ("Reconciliation", "GET", "/reconciliation/configurations", ["/reconciliation/configs"]),
+    ("Reconciliation", "GET", "/reconciliation/configurations/{id}", []),
+    ("Reconciliation", "POST", "/reconciliation/configurations/{id}/versions", []),
+    ("Reconciliation", "PATCH", "/reconciliation/configurations/{id}/status", []),
+    ("Reconciliation", "DELETE", "/reconciliation/configurations/{id}", []),
+    ("Reconciliation", "GET", "/reconciliation/configurations/{id}/versions", []),
 ]
 
 def normalize(path: str) -> str:
@@ -173,20 +174,31 @@ for path, operations in paths.items():
         actual_index[(method.upper(), normalize(path))] = (path, operation)
 
 rows = []
-for domain, method, expected_path in expected:
+for domain, method, expected_path, aliases in expected:
     found = actual_index.get((method, normalize(expected_path)))
+    status = "MISSING"
+    actual_path = "—"
+    detail = ""
+    note = ""
+
     if found:
         actual_path, operation = found
         status = "EXISTS"
         detail = operation.get("operationId", "") if isinstance(operation, dict) else ""
     else:
-        status = "MISSING"
-        actual_path = "—"
-        detail = ""
-    rows.append((domain, method, expected_path, actual_path, status, detail))
+        for alias in aliases:
+            alias_found = actual_index.get((method, normalize(alias)))
+            if alias_found:
+                actual_path, operation = alias_found
+                status = "PARTIAL"
+                detail = operation.get("operationId", "") if isinstance(operation, dict) else ""
+                note = "Alias funcional; requiere adaptación o estandarización"
+                break
+
+    rows.append((domain, method, expected_path, actual_path, status, detail, note))
 
 counts = {}
-for *_, status, _ in rows:
+for *_, status, _, _ in rows:
     counts[status] = counts.get(status, 0) + 1
 
 lines = [
@@ -197,17 +209,30 @@ lines = [
     f"- Título: `{doc.get('info', {}).get('title', 'unknown')}`",
     f"- Endpoints reales: **{len(actual_index)}**",
     f"- EXISTS: **{counts.get('EXISTS', 0)}**",
+    f"- PARTIAL: **{counts.get('PARTIAL', 0)}**",
     f"- MISSING: **{counts.get('MISSING', 0)}**",
     "",
     "## Matriz de compatibilidad",
     "",
-    "| Dominio | Método | Contrato esperado | Endpoint real | Estado | operationId |",
-    "|---|---|---|---|---|---|",
+    "| Dominio | Método | Contrato esperado | Endpoint real | Estado | operationId | Nota |",
+    "|---|---|---|---|---|---|---|",
 ]
 for row in rows:
-    lines.append("| " + " | ".join(f"`{v}`" if i in {1,2,3,5} and v != "—" else str(v) for i, v in enumerate(row)) + " |")
+    values = []
+    for i, value in enumerate(row):
+        if i in {1, 2, 3, 5} and value != "—":
+            values.append(f"`{value}`")
+        else:
+            values.append(str(value))
+    lines.append("| " + " | ".join(values) + " |")
 
 lines += [
+    "",
+    "## Interpretación",
+    "",
+    "- `EXISTS`: el método y path coinciden con el contrato esperado.",
+    "- `PARTIAL`: existe una operación funcionalmente equivalente con otro path; requiere adapter BFF o estandarización backend.",
+    "- `MISSING`: no se encontró operación equivalente en el OpenAPI.",
     "",
     "## Inventario completo del OpenAPI",
     "",
@@ -225,6 +250,8 @@ pass 'Compatibility matrix generated'
 
 if grep -q '| MISSING |' "$REPORT_FILE"; then
   warn 'Missing endpoints were detected; review the compatibility report'
+elif grep -q '| PARTIAL |' "$REPORT_FILE"; then
+  warn 'Compatible aliases were detected; review BFF/backend alignment'
 else
   pass 'All expected endpoints were found'
 fi
