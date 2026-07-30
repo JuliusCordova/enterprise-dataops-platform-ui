@@ -2128,3 +2128,191 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+/* =========================================================
+   CATÁLOGO DE RECONCILIACIÓN
+   ========================================================= */
+
+.catalog-header-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+
+/* =========================================================
+   PROGRESO DEL WIZARD
+   ========================================================= */
+
+.wizard-progress {
+    display: grid;
+    grid-template-columns:
+        repeat(4, minmax(190px, 1fr));
+    gap: 16px;
+
+    margin: 20px 0;
+    padding: 0;
+
+    background: transparent;
+    border: 0;
+}
+
+.wizard-progress-line {
+    display: none;
+}
+
+.wizard-step-button {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 15px;
+
+    min-height: 90px;
+    padding: 20px 24px;
+
+    background:
+        var(--enterprise-surface);
+
+    border:
+        1px solid
+        var(--enterprise-border);
+
+    border-radius: 20px;
+
+    color:
+        var(--enterprise-muted);
+
+    cursor: pointer;
+
+    transition:
+        border-color 0.16s ease,
+        box-shadow 0.16s ease,
+        color 0.16s ease,
+        transform 0.16s ease;
+}
+
+.wizard-step-button:hover:not(:disabled) {
+    border-color:
+        #ffb0a5;
+
+    transform:
+        translateY(-1px);
+}
+
+.wizard-step-button > span {
+    display: grid;
+    flex: 0 0 46px;
+
+    width: 46px;
+    height: 46px;
+
+    place-items: center;
+
+    background:
+        #f0f0f0;
+
+    border-radius: 50%;
+
+    color:
+        #777777;
+
+    font-size: 18px;
+    font-weight: 850;
+}
+
+.wizard-step-button div {
+    min-width: 0;
+}
+
+.wizard-step-button strong,
+.wizard-step-button small {
+    display: block;
+    text-align: left;
+}
+
+.wizard-step-button strong {
+    color: inherit;
+
+    font-size: 15px;
+    font-weight: 800;
+
+    line-height: 1.25;
+}
+
+.wizard-step-button small {
+    margin-top: 5px;
+
+    color:
+        var(--enterprise-muted);
+
+    font-size: 10px;
+}
+
+.wizard-step-button.active {
+    border-color:
+        var(--enterprise-red);
+
+    color:
+        var(--enterprise-black);
+
+    box-shadow:
+        0 10px 26px
+        rgba(255, 70, 45, 0.08);
+}
+
+.wizard-step-button.active > span {
+    background:
+        var(--enterprise-red);
+
+    color:
+        #ffffff;
+}
+
+.wizard-step-button.completed {
+    border-color:
+        #ffd3cc;
+
+    color:
+        var(--enterprise-black);
+}
+
+.wizard-step-button.completed > span {
+    background:
+        var(--enterprise-success);
+
+    color:
+        #ffffff;
+}
+
+.wizard-step-button:disabled {
+    cursor: default;
+    opacity: 1;
+}
+
+
+@media (max-width: 1100px) {
+
+    .wizard-progress {
+        grid-template-columns:
+            repeat(2, minmax(220px, 1fr));
+    }
+}
+
+
+@media (max-width: 680px) {
+
+    .catalog-header-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .wizard-progress {
+        grid-template-columns: 1fr;
+    }
+
+    .wizard-step-button {
+        min-height: 76px;
+    }
+}

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Data Profiling | Enterprise DataOps</title>
+<link rel="stylesheet" th:href="@{/css/platform.css}">
+<link rel="stylesheet" th:href="@{/css/enterprise-theme.css}">
+<link rel="stylesheet" th:href="@{/css/data-quality-experience-v2.css}">
+</head>
+<body><div class="enterprise-shell">
+<aside th:replace="~{fragments/layout :: sidebar('profiling')}"></aside>
+<main class="enterprise-main">
+<header th:replace="~{fragments/layout :: topbar('Data Profiling','Selecciona, analiza y comprende un activo de datos')}"></header>
+<nav class="dq-flow">
+<div class="dq-flow-step active" data-step="1"><span>1</span><div><strong>Seleccionar activo</strong><small>Fuente y ejecución</small></div></div>
+<div class="dq-flow-step" data-step="2"><span>2</span><div><strong>Analizar</strong><small>Perfil estadístico</small></div></div>
+<div class="dq-flow-step" data-step="3"><span>3</span><div><strong>Informe</strong><small>Hallazgos y recomendaciones</small></div></div>
+</nav>
+<section class="dq-layout"><article class="dq-main-panel">
+<section id="p-step-1" class="dq-step-panel"><header class="dq-panel-header"><div><span class="panel-eyebrow">PASO 1 DE 3</span><h2>Selecciona el activo</h2><p>Elige una tabla y define si el profiling será a demanda o programado.</p></div><span class="neutral-chip">Profiling guiado</span></header>
+<div class="dq-panel-content"><div class="dq-form-grid-3">
+<div class="form-field"><label>Conexión</label><select id="p-connection"><option value="">Cargando conexiones...</option></select></div>
+<div class="form-field"><label>Dataset</label><select id="p-dataset" disabled><option value="">Selecciona una conexión</option></select></div>
+<div class="form-field"><label>Tabla</label><select id="p-table" disabled><option value="">Selecciona un dataset</option></select></div>
+</div>
+<section class="scan-mode-section"><h3>Modo de ejecución</h3><div class="scan-mode-grid">
+<label class="scan-mode-card"><input type="radio" name="p-mode" value="ON_DEMAND" checked><div><strong>A demanda</strong><p>Ejecuta inmediatamente.</p></div><span>Recomendado</span></label>
+<label class="scan-mode-card"><input type="radio" name="p-mode" value="SCHEDULED"><div><strong>Programado</strong><p>Guarda una tarea recurrente.</p></div><span>Tarea</span></label>
+</div><div id="p-schedule" class="schedule-fields" hidden>
+<div class="form-field"><label>Frecuencia</label><select id="p-frequency"><option value="DAILY">Diaria</option><option value="WEEKLY">Semanal</option><option value="MONTHLY">Mensual</option></select></div>
+<div class="form-field"><label>Hora</label><input id="p-time" type="time" value="06:00"></div>
+<div class="form-field"><label>Zona horaria</label><select id="p-timezone"><option>America/Lima</option></select></div>
+</div></section></div></section>
+<section id="p-step-2" class="dq-step-panel" hidden><header class="dq-panel-header"><div><span class="panel-eyebrow">PASO 2 DE 3</span><h2>Analiza la tabla</h2><p>Revisa estructura, completitud y cardinalidad.</p></div><span id="p-status" class="neutral-chip">PENDIENTE</span></header>
+<div class="dq-panel-content"><div id="p-progress" class="dq-executive-summary"><div class="loading-indicator"></div><div><strong>Preparando análisis</strong><p>Consultando el perfil estadístico.</p></div></div>
+<div id="p-kpis" class="dq-kpi-grid" hidden><article><span>Registros</span><strong id="p-rows">—</strong></article><article><span>Columnas</span><strong id="p-cols">—</strong></article><article><span>Completitud</span><strong id="p-completeness">—</strong></article><article><span>Clave candidata</span><strong id="p-key">—</strong></article></div>
+<div id="p-table-wrap" class="dq-table-wrapper" hidden><table class="dq-data-table"><thead><tr><th>Columna</th><th>Tipo</th><th>Nulos</th><th>Distintos</th><th>Rol</th></tr></thead><tbody id="p-columns"></tbody></table></div></div></section>
+<section id="p-step-3" class="dq-step-panel" hidden><header class="dq-panel-header"><div><span class="panel-eyebrow">PASO 3 DE 3</span><h2>Informe de profiling</h2><p>Comprende los hallazgos y continúa hacia reglas de calidad.</p></div><span class="neutral-chip">Informe ejecutivo</span></header>
+<div class="dq-panel-content"><section class="dq-executive-summary"><div class="gemini-symbol">✦</div><div><strong>Resumen Gemini</strong><p id="p-summary">—</p></div></section><section class="coverage-section"><header><div><span class="panel-eyebrow">COBERTURA INICIAL</span><h3>Oportunidades de control</h3></div><strong id="p-coverage">0%</strong></header><div class="coverage-bar"><span id="p-coverage-bar"></span></div></section><div id="p-recommendations" class="recommendation-list"></div></div></section>
+<div id="p-message" class="message dq-message" hidden></div>
+<footer class="dq-actions"><button id="p-back" class="enterprise-button enterprise-button-secondary" disabled>Anterior</button><div><button id="p-save-task" class="enterprise-button enterprise-button-secondary" hidden>Guardar tarea</button><button id="p-next" class="enterprise-button enterprise-button-primary">Analizar tabla</button><a id="p-quality" class="enterprise-button enterprise-button-primary" th:href="@{/quality-rules-v2}" hidden>Continuar con reglas</a></div></footer>
+</article><aside class="dq-copilot-panel"><header class="gemini-panel-header"><div class="gemini-symbol">✦</div><div><strong>Gemini Profiling Copilot</strong><span>Asistente contextual</span></div></header><div class="gemini-panel-content"><h3 id="p-copilot-title">Selecciona una tabla</h3><p id="p-copilot-message">El copiloto te acompañará durante el análisis.</p></div></aside></section>
+<footer th:replace="~{fragments/layout :: footer}"></footer></main></div>
+<script th:src="@{/js/profiling/experience-v2.js}"></script></body></html>
