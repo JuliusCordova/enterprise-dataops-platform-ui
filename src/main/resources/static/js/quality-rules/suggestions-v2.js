@@ -1,1 +1,623 @@
-(()=>{"use strict";const E={connections:"/ui/api/profiling/connections",datasets:c=>`/ui/api/profiling/metadata/${encodeURIComponent(c)}/datasets`,tables:(c,d)=>`/ui/api/profiling/metadata/${encodeURIComponent(c)}/${encodeURIComponent(d)}/tables`,suggest:"/ui/api/quality-rules/suggestions",draft:"/ui/api/quality-rules/draft",validate:id=>`/ui/api/quality-rules/draft/${encodeURIComponent(id)}/validate`,publish:id=>`/ui/api/quality-rules/draft/${encodeURIComponent(id)}/confirm`,schedule:"/ui/api/quality-rules/schedules"};let step=1,suggestions=[],selected=new Set,editing=null,draftId=null,validated=false;const $=id=>document.getElementById(id),el={c:$("q-connection"),d:$("q-dataset"),t:$("q-table"),refresh:$("q-refresh"),summary:$("q-summary"),dim:$("q-dimension"),conf:$("q-confidence"),all:$("q-select-all"),body:$("q-body"),cov:$("q-coverage"),covBar:$("q-coverage-bar"),selected:$("q-selected"),schedule:$("q-schedule"),freq:$("q-frequency"),time:$("q-time"),tz:$("q-timezone"),owner:$("q-owner"),validation:$("q-validation"),status:$("q-status"),msg:$("q-message"),back:$("q-back"),next:$("q-next"),save:$("q-save"),validate:$("q-validate"),publish:$("q-publish"),ct:$("q-copilot-title"),cm:$("q-copilot-message"),dialog:$("q-dialog"),dt:$("q-dialog-title"),dn:$("q-dialog-name"),dw:$("q-dialog-warning"),dc:$("q-dialog-critical"),dd:$("q-dialog-description"),ds:$("q-dialog-save")};const esc=v=>String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;"),num=v=>Number.isFinite(Number(v))?Number(v):0,arr=(p,ks)=>{if(Array.isArray(p))return p;for(const k of ks)if(Array.isArray(p?.[k]))return p[k];return[]},val=(i,ks)=>typeof i==="string"?i:ks.map(k=>i?.[k]).find(Boolean)||"";async function api(u,o={}){const r=await fetch(u,{...o,headers:{Accept:"application/json",...(o.headers||{})}}),ct=r.headers.get("content-type")||"",p=ct.includes("application/json")?await r.json():{message:await r.text()};if(!r.ok)throw new Error(typeof p.detail==="string"?p.detail:p.message||`HTTP ${r.status}`);return p}function fill(s,items,ph,vr,lr){s.innerHTML=`<option value="">${esc(ph)}</option>`;const seen=new Set;items.forEach(i=>{const v=vr(i);if(!v||seen.has(v))return;seen.add(v);const o=document.createElement("option");o.value=v;o.textContent=lr(i)||v;s.appendChild(o)})}function reset(s,t){s.innerHTML=`<option value="">${esc(t)}</option>`}function show(t,type){el.msg.hidden=false;el.msg.textContent=t;el.msg.className=`message dq-message message-${type}`}function hide(){el.msg.hidden=true}async function loadC(){try{const p=await api(E.connections),items=arr(p,["connections","items","data"]);fill(el.c,items,"Selecciona una conexión",i=>val(i,["connection_id","id","name"]),i=>val(i,["display_name","connection_name","name","connection_id"]));el.c.disabled=!items.length}catch(e){show("No se pudieron cargar las conexiones.","error")}}async function loadD(){reset(el.t,"Selecciona un dataset");el.t.disabled=true;if(!el.c.value){reset(el.d,"Selecciona una conexión");el.d.disabled=true;return}try{const p=await api(E.datasets(el.c.value)),items=arr(p,["datasets","items","data"]);fill(el.d,items,"Selecciona un dataset",i=>val(i,["dataset_id","dataset_name","name"]),i=>val(i,["display_name","dataset_name","dataset_id","name"]));el.d.disabled=!items.length}catch(e){show("No se pudieron cargar los datasets.","error")}}async function loadT(){if(!el.c.value||!el.d.value)return;try{const p=await api(E.tables(el.c.value,el.d.value)),items=arr(p,["tables","items","data"]);fill(el.t,items,"Selecciona una tabla",i=>val(i,["table_id","table_name","name"]),i=>val(i,["display_name","table_name","table_id","name"]));el.t.disabled=!items.length}catch(e){show("No se pudieron cargar las tablas.","error")}}function profileMode(){return document.querySelector('input[name="q-profile-mode"]:checked')?.value||"LATEST_PROFILE"}function execMode(){return document.querySelector('input[name="q-exec-mode"]:checked')?.value||"ON_DEMAND"}function fallback(){const raw=sessionStorage.getItem("dataOpsLatestProfileV2");if(!raw)return[];try{const c=JSON.parse(raw),rules=[];(c.profile?.cols||c.profile?.columns||[]).forEach(col=>{const name=col.name||col.column_name,nul=num(col.nullPct??col.nullPercentage),dist=num(col.distinctPct??col.distinctPercentage);if(nul>0)rules.push({id:`NN_${name}`,name:`${name}_not_null`,type:"NOT_NULL",column:name,description:`Evita valores nulos. El profiling detectó ${nul.toFixed(2)}% de nulos.`,dimension:"COMPLETENESS",confidence:nul>=5?"HIGH":"MEDIUM",warning:.5,critical:2});if(/(^|_)id$/i.test(name)&&dist>=95)rules.push({id:`U_${name}`,name:`${name}_unique`,type:"UNIQUENESS",column:name,description:"Valida unicidad porque parece una clave.",dimension:"UNIQUENESS",confidence:"HIGH",warning:.1,critical:1});if(/amount|price|cost|sales|total|monto|importe/i.test(name))rules.push({id:`R_${name}`,name:`${name}_non_negative`,type:"VALUE_RANGE",column:name,description:"Valida valores no negativos por su rol de negocio.",dimension:"VALIDITY",confidence:"MEDIUM",warning:.5,critical:2})});return rules.slice(0,40)}catch{return[]}}function normalize(p){return arr(p,["suggestions","rules","items","data"]).map((r,i)=>({id:r.rule_id||r.id||`S_${i}`,name:r.rule_name||r.name||`Regla_${i+1}`,type:r.rule_type||r.type||"CUSTOM",column:r.column_name||r.column||"—",description:r.rule_description||r.description||"Validación sugerida por Gemini.",dimension:String(r.rule_dimension||r.dimension||"VALIDITY").toUpperCase(),confidence:String(r.confidence||r.confidence_level||"MEDIUM").toUpperCase().replace("ALTA","HIGH").replace("BAJA","LOW"),warning:num(r.warning_threshold??.5),critical:num(r.critical_threshold??2)}))}async function generate(){try{const p=await api(E.suggest,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({connection_id:el.c.value,dataset_id:el.d.value,table_id:el.t.value,profile_mode:profileMode()})});suggestions=normalize(p)}catch(e){suggestions=fallback();show("Se usaron recomendaciones locales basadas en profiling.","warning")}selected=new Set(suggestions.filter(r=>r.confidence==="HIGH").map(r=>r.id));renderTable()}function filtered(){return suggestions.filter(r=>(!el.dim.value||r.dimension===el.dim.value)&&(!el.conf.value||r.confidence===el.conf.value))}function renderTable(){const rules=filtered();el.body.innerHTML=rules.map(r=>`<tr><td><input type="checkbox" data-select="${esc(r.id)}" ${selected.has(r.id)?"checked":""}></td><td><strong>${esc(r.name)}</strong></td><td>${esc(r.type)}</td><td>${esc(r.column)}</td><td>${esc(r.description)}</td><td><span class="dimension-chip">${esc(r.dimension)}</span></td><td><span class="confidence-chip confidence-${r.confidence.toLowerCase()}">${r.confidence==="HIGH"?"Alta":r.confidence==="LOW"?"Revisión":"Media"}</span></td><td><button class="table-action-button" data-edit="${esc(r.id)}">Editar</button></td></tr>`).join("");el.body.querySelectorAll("[data-select]").forEach(i=>i.addEventListener("change",()=>{i.checked?selected.add(i.dataset.select):selected.delete(i.dataset.select);updateSummary()}));el.body.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>openDialog(b.dataset.edit)));el.all.checked=rules.length>0&&rules.every(r=>selected.has(r.id));updateSummary()}function updateSummary(){el.summary.textContent=`${suggestions.length} sugerencias · ${selected.size} seleccionadas`}function openDialog(id){const r=suggestions.find(x=>x.id===id);if(!r)return;editing=id;el.dt.textContent=r.name;el.dn.value=r.name;el.dw.value=r.warning;el.dc.value=r.critical;el.dd.value=r.description;el.dialog.showModal()}function saveDialog(){const r=suggestions.find(x=>x.id===editing);if(!r)return;r.name=el.dn.value.trim()||r.name;r.warning=num(el.dw.value);r.critical=num(el.dc.value);r.description=el.dd.value.trim()||r.description;el.dialog.close();renderTable()}function selectedRules(){return suggestions.filter(r=>selected.has(r.id))}function renderSelected(){const rules=selectedRules();el.selected.innerHTML=rules.map(r=>`<article class="selected-rule-card"><header><div><h3>${esc(r.name)}</h3><p>${esc(r.column)} · ${esc(r.dimension)}</p></div><button class="table-action-button" data-edit-selected="${esc(r.id)}">Editar</button></header><div class="selected-rule-thresholds"><div class="form-field"><label>Advertencia</label><input type="number" step="0.01" value="${r.warning}" data-w="${esc(r.id)}"></div><div class="form-field"><label>Crítico</label><input type="number" step="0.01" value="${r.critical}" data-c="${esc(r.id)}"></div></div></article>`).join("");el.selected.querySelectorAll("[data-edit-selected]").forEach(b=>b.addEventListener("click",()=>openDialog(b.dataset.editSelected)));el.selected.querySelectorAll("[data-w]").forEach(i=>i.addEventListener("change",()=>{const r=suggestions.find(x=>x.id===i.dataset.w);if(r){r.warning=num(i.value);validated=false;el.publish.disabled=true}}));el.selected.querySelectorAll("[data-c]").forEach(i=>i.addEventListener("change",()=>{const r=suggestions.find(x=>x.id===i.dataset.c);if(r){r.critical=num(i.value);validated=false;el.publish.disabled=true}}));const dims=new Set(rules.map(r=>r.dimension)),cov=Math.min(100,rules.length*7+dims.size*8);el.cov.textContent=`${cov}%`;el.covBar.style.width=`${cov}%`}async function next(){hide();if(step===1){if(!el.c.value||!el.d.value||!el.t.value){show("Selecciona conexión, dataset y tabla.","warning");return}await generate();step=2;render();return}if(step===2){if(!selected.size){show("Selecciona al menos una regla.","warning");return}step=3;render()}}function payload(){return{config_name:`Calidad de ${el.d.value}.${el.t.value}`,connection_id:el.c.value,dataset_id:el.d.value,table_id:el.t.value,owner_email:el.owner.value.trim(),execution_mode:execMode(),rules:selectedRules().map(r=>({rule_name:r.name,rule_type:r.type,column_name:r.column,rule_dimension:r.dimension,description:r.description,warning_threshold:r.warning,critical_threshold:r.critical,confidence:r.confidence}))}}async function save(){try{const p=await api(E.draft,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload())});draftId=p.draft_id||p.data?.draft_id||`LOCAL_${Date.now()}`;el.status.textContent="GUARDADO";show(`Borrador ${draftId} guardado.`,"success")}catch(e){draftId=`LOCAL_${Date.now()}`;show("Borrador guardado localmente; ajusta ENDPOINTS.draft para persistirlo.","warning")}}async function validate(){if(!draftId)await save();const invalid=selectedRules().filter(r=>r.warning<0||r.critical<r.warning);if(invalid.length){show("Hay umbrales inconsistentes.","warning");return}try{if(!draftId.startsWith("LOCAL_"))await api(E.validate(draftId),{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});validated=true;el.validation.hidden=false;el.validation.innerHTML='<article class="validation-checklist-item"><span class="validation-icon-success">✓</span><div><strong>Configuración válida</strong><p>Reglas y umbrales consistentes.</p></div></article>';el.publish.disabled=false;el.status.textContent="VALIDADO";show("Lista para publicar.","success")}catch(e){show("Validación observada: "+e.message,"error")}}async function publish(){if(!validated){show("Valida antes de publicar.","warning");return}try{if(!draftId.startsWith("LOCAL_"))await api(E.publish(draftId),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({confirmed_by:el.owner.value.trim(),active_flag:true})});if(execMode()==="SCHEDULED")try{await api(E.schedule,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({draft_id:draftId,frequency:el.freq.value,time:el.time.value,timezone:el.tz.value,active_flag:true})})}catch{}el.status.textContent="PUBLICADO";el.publish.disabled=true;el.publish.textContent="Reglas publicadas";show("Reglas publicadas correctamente.","success")}catch(e){show("No se pudieron publicar: "+e.message,"error")}}function render(){[1,2,3].forEach(s=>$(`q-step-${s}`).hidden=s!==step);document.querySelectorAll("[data-q-step]").forEach(n=>{const s=Number(n.dataset.qStep);n.classList.toggle("active",s===step);n.classList.toggle("completed",s<step)});el.back.disabled=step===1;el.next.hidden=step===3;el.save.hidden=step!==3;el.validate.hidden=step!==3;el.publish.hidden=step!==3;if(step<3)el.next.textContent=step===1?"Generar sugerencias":"Configurar seleccionadas";if(step===2)renderTable();if(step===3)renderSelected();el.schedule.hidden=execMode()!=="SCHEDULED";const c={1:["Selecciona el activo","Puedes reutilizar el último profiling."],2:["Revisa recomendaciones","Gemini recomienda; tú seleccionas."],3:["Configura y publica","Define umbrales y modo de ejecución."]}[step];el.ct.textContent=c[0];el.cm.textContent=c[1]}el.c.addEventListener("change",loadD);el.d.addEventListener("change",loadT);el.back.addEventListener("click",()=>{if(step>1){step--;render()}});el.next.addEventListener("click",next);el.refresh.addEventListener("click",generate);el.dim.addEventListener("change",renderTable);el.conf.addEventListener("change",renderTable);el.all.addEventListener("change",()=>{filtered().forEach(r=>el.all.checked?selected.add(r.id):selected.delete(r.id));renderTable()});document.querySelectorAll('input[name="q-exec-mode"]').forEach(i=>i.addEventListener("change",render));el.save.addEventListener("click",save);el.validate.addEventListener("click",validate);el.publish.addEventListener("click",publish);el.ds.addEventListener("click",saveDialog);loadC().then(render)})()
+(() => {
+    "use strict";
+
+    const ENDPOINTS = {
+        connections: "/ui/api/profiling/connections",
+        datasets: connectionId =>
+            `/ui/api/profiling/metadata/${encodeURIComponent(connectionId)}/datasets`,
+        tables: (connectionId, datasetId) =>
+            `/ui/api/profiling/metadata/${encodeURIComponent(connectionId)}/${encodeURIComponent(datasetId)}/tables`,
+        suggestions: "/ui/api/quality-rules/suggestions",
+        draft: "/ui/api/quality-rules/draft",
+        validate: draftId =>
+            `/ui/api/quality-rules/draft/${encodeURIComponent(draftId)}/validate`,
+        publish: draftId =>
+            `/ui/api/quality-rules/draft/${encodeURIComponent(draftId)}/confirm`
+    };
+
+    let currentStep = 1;
+    let suggestions = [];
+    let selectedRuleIds = new Set();
+    let editingRuleId = null;
+    let draftId = null;
+    let validated = false;
+    let suggestionMetadata = {};
+
+    const byId = id => document.getElementById(id);
+    const elements = {
+        connection: byId("q-connection"),
+        dataset: byId("q-dataset"),
+        table: byId("q-table"),
+        refresh: byId("q-refresh"),
+        summary: byId("q-summary"),
+        dimension: byId("q-dimension"),
+        confidence: byId("q-confidence"),
+        selectAll: byId("q-select-all"),
+        body: byId("q-body"),
+        coverage: byId("q-coverage"),
+        coverageBar: byId("q-coverage-bar"),
+        selected: byId("q-selected"),
+        schedule: byId("q-schedule"),
+        owner: byId("q-owner"),
+        validation: byId("q-validation"),
+        status: byId("q-status"),
+        message: byId("q-message"),
+        back: byId("q-back"),
+        next: byId("q-next"),
+        save: byId("q-save"),
+        validate: byId("q-validate"),
+        publish: byId("q-publish"),
+        copilotTitle: byId("q-copilot-title"),
+        copilotMessage: byId("q-copilot-message"),
+        dialog: byId("q-dialog"),
+        dialogTitle: byId("q-dialog-title"),
+        dialogName: byId("q-dialog-name"),
+        dialogWarning: byId("q-dialog-warning"),
+        dialogCritical: byId("q-dialog-critical"),
+        dialogDescription: byId("q-dialog-description"),
+        dialogSave: byId("q-dialog-save")
+    };
+
+    const escapeHtml = value => String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+
+    const numberOrNull = value => {
+        if (value === null || value === undefined || value === "") {
+            return null;
+        }
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : null;
+    };
+
+    const extractArray = (payload, keys) => {
+        if (Array.isArray(payload)) {
+            return payload;
+        }
+        for (const key of keys) {
+            if (Array.isArray(payload?.[key])) {
+                return payload[key];
+            }
+        }
+        return [];
+    };
+
+    const firstValue = (item, keys) => {
+        if (typeof item === "string") {
+            return item;
+        }
+        return keys.map(key => item?.[key]).find(value => value !== undefined && value !== null && value !== "") || "";
+    };
+
+    async function apiRequest(url, options = {}) {
+        const response = await fetch(url, {
+            ...options,
+            headers: {
+                Accept: "application/json",
+                ...(options.headers || {})
+            }
+        });
+
+        const contentType = response.headers.get("content-type") || "";
+        const payload = contentType.includes("application/json")
+            ? await response.json()
+            : {message: await response.text()};
+
+        if (!response.ok) {
+            const detail = typeof payload.detail === "string"
+                ? payload.detail
+                : payload.message || `HTTP ${response.status}`;
+            throw new Error(detail);
+        }
+        return payload;
+    }
+
+    function populateSelect(select, items, placeholder, valueResolver, labelResolver) {
+        select.innerHTML = `<option value="">${escapeHtml(placeholder)}</option>`;
+        const seen = new Set();
+        items.forEach(item => {
+            const value = valueResolver(item);
+            if (!value || seen.has(value)) {
+                return;
+            }
+            seen.add(value);
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = labelResolver(item) || value;
+            select.appendChild(option);
+        });
+    }
+
+    function resetSelect(select, placeholder) {
+        select.innerHTML = `<option value="">${escapeHtml(placeholder)}</option>`;
+    }
+
+    function showMessage(text, type) {
+        elements.message.hidden = false;
+        elements.message.textContent = text;
+        elements.message.className = `message dq-message message-${type}`;
+    }
+
+    function hideMessage() {
+        elements.message.hidden = true;
+    }
+
+    async function loadConnections() {
+        try {
+            const payload = await apiRequest(ENDPOINTS.connections);
+            const items = extractArray(payload, ["connections", "items", "data"]);
+            populateSelect(
+                elements.connection,
+                items,
+                "Selecciona una conexión",
+                item => firstValue(item, ["connection_id", "id", "name"]),
+                item => firstValue(item, ["display_name", "connection_name", "name", "connection_id"])
+            );
+            elements.connection.disabled = items.length === 0;
+        } catch (error) {
+            showMessage(`No se pudieron cargar las conexiones: ${error.message}`, "error");
+        }
+    }
+
+    async function loadDatasets() {
+        resetSelect(elements.table, "Selecciona un dataset");
+        elements.table.disabled = true;
+        invalidatePersistedState();
+
+        if (!elements.connection.value) {
+            resetSelect(elements.dataset, "Selecciona una conexión");
+            elements.dataset.disabled = true;
+            return;
+        }
+
+        try {
+            const payload = await apiRequest(ENDPOINTS.datasets(elements.connection.value));
+            const items = extractArray(payload, ["datasets", "items", "data"]);
+            populateSelect(
+                elements.dataset,
+                items,
+                "Selecciona un dataset",
+                item => firstValue(item, ["dataset_id", "dataset_name", "name"]),
+                item => firstValue(item, ["display_name", "dataset_name", "dataset_id", "name"])
+            );
+            elements.dataset.disabled = items.length === 0;
+        } catch (error) {
+            showMessage(`No se pudieron cargar los datasets: ${error.message}`, "error");
+        }
+    }
+
+    async function loadTables() {
+        invalidatePersistedState();
+        if (!elements.connection.value || !elements.dataset.value) {
+            return;
+        }
+
+        try {
+            const payload = await apiRequest(
+                ENDPOINTS.tables(elements.connection.value, elements.dataset.value)
+            );
+            const items = extractArray(payload, ["tables", "items", "data"]);
+            populateSelect(
+                elements.table,
+                items,
+                "Selecciona una tabla",
+                item => firstValue(item, ["table_id", "table_name", "name"]),
+                item => firstValue(item, ["display_name", "table_name", "table_id", "name"])
+            );
+            elements.table.disabled = items.length === 0;
+        } catch (error) {
+            showMessage(`No se pudieron cargar las tablas: ${error.message}`, "error");
+        }
+    }
+
+    function profileMode() {
+        return document.querySelector('input[name="q-profile-mode"]:checked')?.value || "LATEST_PROFILE";
+    }
+
+    function executionMode() {
+        return "ON_DEMAND";
+    }
+
+    function normalizeSuggestions(payload) {
+        suggestionMetadata = payload?.metadata || payload?.summary || {};
+        return extractArray(payload, ["suggestions", "rules", "items", "data"]).map((rule, index) => ({
+            id: rule.rule_id || rule.id || `SERVER_RULE_${index}`,
+            name: rule.rule_name || rule.name || `Regla_${index + 1}`,
+            type: rule.rule_type || rule.type || "CUSTOM",
+            column: rule.column_name || rule.column || "—",
+            description: rule.rule_description || rule.description || "Sin descripción",
+            dimension: String(rule.rule_dimension || rule.dimension || "UNSPECIFIED").toUpperCase(),
+            confidence: String(rule.confidence || rule.confidence_level || "UNSPECIFIED").toUpperCase(),
+            warning: numberOrNull(rule.warning_threshold),
+            critical: numberOrNull(rule.critical_threshold)
+        }));
+    }
+
+    async function generateSuggestions() {
+        suggestions = [];
+        selectedRuleIds = new Set();
+        suggestionMetadata = {};
+        renderTable();
+
+        try {
+            const payload = await apiRequest(ENDPOINTS.suggestions, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    connection_id: elements.connection.value,
+                    dataset_id: elements.dataset.value,
+                    table_id: elements.table.value,
+                    profile_mode: profileMode()
+                })
+            });
+            suggestions = normalizeSuggestions(payload);
+            selectedRuleIds = new Set(
+                suggestions
+                    .filter(rule => rule.confidence === "HIGH")
+                    .map(rule => rule.id)
+            );
+            if (suggestions.length === 0) {
+                showMessage("El backend no devolvió sugerencias de reglas.", "warning");
+            }
+        } catch (error) {
+            showMessage(
+                `No se pudieron obtener sugerencias del backend: ${error.message}. No se generaron reglas locales.`,
+                "error"
+            );
+        }
+        renderTable();
+    }
+
+    function filteredSuggestions() {
+        return suggestions.filter(rule =>
+            (!elements.dimension.value || rule.dimension === elements.dimension.value)
+            && (!elements.confidence.value || rule.confidence === elements.confidence.value)
+        );
+    }
+
+    function renderTable() {
+        const rules = filteredSuggestions();
+        elements.body.innerHTML = rules.map(rule => `
+            <tr>
+                <td><input type="checkbox" data-select="${escapeHtml(rule.id)}" ${selectedRuleIds.has(rule.id) ? "checked" : ""}></td>
+                <td><strong>${escapeHtml(rule.name)}</strong></td>
+                <td>${escapeHtml(rule.type)}</td>
+                <td>${escapeHtml(rule.column)}</td>
+                <td>${escapeHtml(rule.description)}</td>
+                <td><span class="dimension-chip">${escapeHtml(rule.dimension)}</span></td>
+                <td><span class="confidence-chip confidence-${escapeHtml(rule.confidence.toLowerCase())}">${escapeHtml(rule.confidence)}</span></td>
+                <td><button class="table-action-button" data-edit="${escapeHtml(rule.id)}">Editar</button></td>
+            </tr>
+        `).join("");
+
+        elements.body.querySelectorAll("[data-select]").forEach(input => {
+            input.addEventListener("change", () => {
+                input.checked
+                    ? selectedRuleIds.add(input.dataset.select)
+                    : selectedRuleIds.delete(input.dataset.select);
+                invalidatePersistedState();
+                updateSummary();
+            });
+        });
+        elements.body.querySelectorAll("[data-edit]").forEach(button => {
+            button.addEventListener("click", () => openDialog(button.dataset.edit));
+        });
+        elements.selectAll.checked = rules.length > 0 && rules.every(rule => selectedRuleIds.has(rule.id));
+        updateSummary();
+    }
+
+    function updateSummary() {
+        elements.summary.textContent = `${suggestions.length} sugerencias del backend · ${selectedRuleIds.size} seleccionadas`;
+    }
+
+    function openDialog(ruleId) {
+        const rule = suggestions.find(item => item.id === ruleId);
+        if (!rule) {
+            return;
+        }
+        editingRuleId = ruleId;
+        elements.dialogTitle.textContent = rule.name;
+        elements.dialogName.value = rule.name;
+        elements.dialogWarning.value = rule.warning ?? "";
+        elements.dialogCritical.value = rule.critical ?? "";
+        elements.dialogDescription.value = rule.description;
+        elements.dialog.showModal();
+    }
+
+    function saveDialog() {
+        const rule = suggestions.find(item => item.id === editingRuleId);
+        if (!rule) {
+            return;
+        }
+        rule.name = elements.dialogName.value.trim() || rule.name;
+        rule.warning = numberOrNull(elements.dialogWarning.value);
+        rule.critical = numberOrNull(elements.dialogCritical.value);
+        rule.description = elements.dialogDescription.value.trim() || rule.description;
+        invalidatePersistedState();
+        elements.dialog.close();
+        renderTable();
+    }
+
+    function selectedRules() {
+        return suggestions.filter(rule => selectedRuleIds.has(rule.id));
+    }
+
+    function renderSelectedRules() {
+        const rules = selectedRules();
+        elements.selected.innerHTML = rules.map(rule => `
+            <article class="selected-rule-card">
+                <header>
+                    <div><h3>${escapeHtml(rule.name)}</h3><p>${escapeHtml(rule.column)} · ${escapeHtml(rule.dimension)}</p></div>
+                    <button class="table-action-button" data-edit-selected="${escapeHtml(rule.id)}">Editar</button>
+                </header>
+                <div class="selected-rule-thresholds">
+                    <div class="form-field"><label>Advertencia</label><input type="number" step="0.01" value="${rule.warning ?? ""}" data-warning="${escapeHtml(rule.id)}"></div>
+                    <div class="form-field"><label>Crítico</label><input type="number" step="0.01" value="${rule.critical ?? ""}" data-critical="${escapeHtml(rule.id)}"></div>
+                </div>
+            </article>
+        `).join("");
+
+        elements.selected.querySelectorAll("[data-edit-selected]").forEach(button => {
+            button.addEventListener("click", () => openDialog(button.dataset.editSelected));
+        });
+        elements.selected.querySelectorAll("[data-warning]").forEach(input => {
+            input.addEventListener("change", () => {
+                const rule = suggestions.find(item => item.id === input.dataset.warning);
+                if (rule) {
+                    rule.warning = numberOrNull(input.value);
+                    invalidatePersistedState();
+                }
+            });
+        });
+        elements.selected.querySelectorAll("[data-critical]").forEach(input => {
+            input.addEventListener("change", () => {
+                const rule = suggestions.find(item => item.id === input.dataset.critical);
+                if (rule) {
+                    rule.critical = numberOrNull(input.value);
+                    invalidatePersistedState();
+                }
+            });
+        });
+
+        const coverage = numberOrNull(
+            suggestionMetadata.coverage_percentage
+            ?? suggestionMetadata.coverage
+            ?? suggestionMetadata.coverage_pct
+        );
+        elements.coverage.textContent = coverage === null ? "No informado" : `${coverage.toFixed(1)}%`;
+        elements.coverageBar.style.width = coverage === null ? "0%" : `${Math.max(0, Math.min(100, coverage))}%`;
+    }
+
+    async function nextStep() {
+        hideMessage();
+        if (currentStep === 1) {
+            if (!elements.connection.value || !elements.dataset.value || !elements.table.value) {
+                showMessage("Selecciona conexión, dataset y tabla.", "warning");
+                return;
+            }
+            await generateSuggestions();
+            if (suggestions.length === 0) {
+                return;
+            }
+            currentStep = 2;
+            render();
+            return;
+        }
+        if (currentStep === 2) {
+            if (selectedRuleIds.size === 0) {
+                showMessage("Selecciona al menos una regla.", "warning");
+                return;
+            }
+            currentStep = 3;
+            render();
+        }
+    }
+
+    function buildPayload() {
+        return {
+            config_name: `Calidad de ${elements.dataset.value}.${elements.table.value}`,
+            connection_id: elements.connection.value,
+            dataset_id: elements.dataset.value,
+            table_id: elements.table.value,
+            owner_email: elements.owner.value.trim(),
+            execution_mode: executionMode(),
+            rules: selectedRules().map(rule => ({
+                rule_name: rule.name,
+                rule_type: rule.type,
+                column_name: rule.column,
+                rule_dimension: rule.dimension,
+                description: rule.description,
+                warning_threshold: rule.warning,
+                critical_threshold: rule.critical,
+                confidence: rule.confidence
+            }))
+        };
+    }
+
+    async function saveDraft() {
+        invalidatePersistedState();
+        try {
+            const payload = await apiRequest(ENDPOINTS.draft, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(buildPayload())
+            });
+            const persistedDraftId = payload.draft_id || payload.data?.draft_id;
+            if (!persistedDraftId) {
+                throw new Error("El backend respondió sin draft_id");
+            }
+            draftId = persistedDraftId;
+            elements.status.textContent = "GUARDADO";
+            showMessage(`Borrador ${draftId} guardado en backend.`, "success");
+            return true;
+        } catch (error) {
+            draftId = null;
+            elements.status.textContent = "NO GUARDADO";
+            showMessage(`No se pudo guardar el borrador: ${error.message}`, "error");
+            return false;
+        }
+    }
+
+    async function validateDraft() {
+        if (!draftId) {
+            const saved = await saveDraft();
+            if (!saved) {
+                return;
+            }
+        }
+
+        try {
+            const payload = await apiRequest(ENDPOINTS.validate(draftId), {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: "{}"
+            });
+            const isValid = payload.valid ?? payload.is_valid ?? payload.data?.valid ?? true;
+            if (!isValid) {
+                throw new Error(payload.message || "El backend reportó una configuración inválida");
+            }
+            validated = true;
+            elements.validation.hidden = false;
+            elements.validation.innerHTML = `
+                <article class="validation-checklist-item">
+                    <span class="validation-icon-success">✓</span>
+                    <div><strong>Validación backend aprobada</strong><p>La configuración fue validada por el servicio.</p></div>
+                </article>`;
+            elements.publish.disabled = false;
+            elements.status.textContent = "VALIDADO";
+            showMessage("La configuración está lista para publicar.", "success");
+        } catch (error) {
+            validated = false;
+            elements.publish.disabled = true;
+            elements.status.textContent = "OBSERVADO";
+            showMessage(`No se pudo validar: ${error.message}`, "error");
+        }
+    }
+
+    async function publishDraft() {
+        if (!validated || !draftId) {
+            showMessage("Guarda y valida la configuración antes de publicar.", "warning");
+            return;
+        }
+
+        try {
+            const payload = await apiRequest(ENDPOINTS.publish(draftId), {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    confirmed_by: elements.owner.value.trim(),
+                    active_flag: true
+                })
+            });
+            const publishedId = payload.quality_config_id
+                || payload.config_id
+                || payload.data?.quality_config_id
+                || payload.data?.config_id;
+            if (!publishedId) {
+                throw new Error("El backend respondió sin identificador de configuración publicada");
+            }
+            elements.status.textContent = "PUBLICADO";
+            elements.publish.disabled = true;
+            elements.publish.textContent = "Reglas publicadas";
+            showMessage(`Configuración ${publishedId} publicada correctamente.`, "success");
+        } catch (error) {
+            elements.status.textContent = "NO PUBLICADO";
+            showMessage(`No se pudieron publicar las reglas: ${error.message}`, "error");
+        }
+    }
+
+    function invalidatePersistedState() {
+        draftId = null;
+        validated = false;
+        elements.publish.disabled = true;
+        if (elements.status) {
+            elements.status.textContent = "BORRADOR";
+        }
+    }
+
+    function disableUnsupportedScheduling() {
+        document.querySelectorAll('input[name="q-exec-mode"]').forEach(input => {
+            if (input.value === "SCHEDULED") {
+                input.disabled = true;
+                input.checked = false;
+                input.title = "Programación no disponible: contrato backend no certificado";
+            }
+            if (input.value === "ON_DEMAND") {
+                input.checked = true;
+            }
+        });
+        if (elements.schedule) {
+            elements.schedule.hidden = true;
+        }
+    }
+
+    function render() {
+        [1, 2, 3].forEach(step => {
+            byId(`q-step-${step}`).hidden = step !== currentStep;
+        });
+        document.querySelectorAll("[data-q-step]").forEach(node => {
+            const step = Number(node.dataset.qStep);
+            node.classList.toggle("active", step === currentStep);
+            node.classList.toggle("completed", step < currentStep);
+        });
+
+        elements.back.disabled = currentStep === 1;
+        elements.next.hidden = currentStep === 3;
+        elements.save.hidden = currentStep !== 3;
+        elements.validate.hidden = currentStep !== 3;
+        elements.publish.hidden = currentStep !== 3;
+
+        if (currentStep < 3) {
+            elements.next.textContent = currentStep === 1
+                ? "Generar sugerencias"
+                : "Configurar seleccionadas";
+        }
+        if (currentStep === 2) {
+            renderTable();
+        }
+        if (currentStep === 3) {
+            renderSelectedRules();
+        }
+
+        const copy = {
+            1: ["Selecciona el activo", "Las sugerencias serán solicitadas al backend."],
+            2: ["Revisa recomendaciones", "Solo se muestran reglas devueltas por el servicio."],
+            3: ["Configura y publica", "Guardar, validar y publicar requieren persistencia real."]
+        }[currentStep];
+        elements.copilotTitle.textContent = copy[0];
+        elements.copilotMessage.textContent = copy[1];
+    }
+
+    elements.connection.addEventListener("change", loadDatasets);
+    elements.dataset.addEventListener("change", loadTables);
+    elements.table.addEventListener("change", invalidatePersistedState);
+    elements.back.addEventListener("click", () => {
+        if (currentStep > 1) {
+            currentStep -= 1;
+            render();
+        }
+    });
+    elements.next.addEventListener("click", nextStep);
+    elements.refresh.addEventListener("click", generateSuggestions);
+    elements.dimension.addEventListener("change", renderTable);
+    elements.confidence.addEventListener("change", renderTable);
+    elements.selectAll.addEventListener("change", () => {
+        filteredSuggestions().forEach(rule => {
+            elements.selectAll.checked
+                ? selectedRuleIds.add(rule.id)
+                : selectedRuleIds.delete(rule.id);
+        });
+        invalidatePersistedState();
+        renderTable();
+    });
+    elements.save.addEventListener("click", saveDraft);
+    elements.validate.addEventListener("click", validateDraft);
+    elements.publish.addEventListener("click", publishDraft);
+    elements.dialogSave.addEventListener("click", saveDialog);
+
+    disableUnsupportedScheduling();
+    loadConnections().then(render);
+})();
