@@ -1,854 +1,562 @@
 <!DOCTYPE html>
-
-<html
-    lang="es"
-    xmlns:th="http://www.thymeleaf.org">
-
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
-
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Nueva cuadratura | Enterprise DataOps</title>
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1">
-
-    <title>
-        Nueva cuadratura | Enterprise DataOps
-    </title>
-
-    <link
-        rel="stylesheet"
-        th:href="@{/css/platform.css}">
-
-    <link
-        rel="stylesheet"
-        th:href="@{/css/enterprise-theme.css}">
-
+    <link rel="stylesheet" th:href="@{/css/platform.css}">
+    <link rel="stylesheet" th:href="@{/css/enterprise-theme.css}">
+    <link rel="stylesheet" th:href="@{/css/reconciliation-wizard-v2.css}">
 </head>
 
 <body>
-
 <div class="enterprise-shell">
 
-    <aside
-        th:replace="~{fragments/layout :: sidebar('reconciliation')}">
-    </aside>
+    <aside th:replace="~{fragments/layout :: sidebar('reconciliation')}"></aside>
 
     <main class="enterprise-main">
 
-        <header
-            th:replace="~{fragments/layout :: topbar(
-                'Nueva cuadratura',
-                'Configura origen, destino, claves, métricas y tolerancias'
-            )}">
-        </header>
+        <header th:replace="~{fragments/layout :: topbar(
+            'Nueva cuadratura',
+            'Configura una validación reutilizable entre origen y destino'
+        )}"></header>
 
         <section class="wizard-header-card">
-
             <div>
-
-                <span class="enterprise-eyebrow">
-                    RECONCILIATION WIZARD
-                </span>
-
-                <h2>
-                    Diseña un control reutilizable
-                </h2>
-
+                <span class="enterprise-eyebrow">RECONCILIATION WIZARD</span>
+                <h2>Diseña una nueva cuadratura</h2>
                 <p>
-                    El asistente consulta la metadata real,
-                    identifica columnas comunes y permite validar
-                    la configuración antes de publicarla.
+                    Define las fuentes, revisa las recomendaciones de Gemini,
+                    selecciona las métricas y publica un control reutilizable.
                 </p>
-
             </div>
 
-            <a
-                class="enterprise-button enterprise-button-secondary"
-                th:href="@{/reconciliation}">
+            <a class="enterprise-button enterprise-button-secondary"
+               th:href="@{/reconciliation}">
                 Volver al catálogo
             </a>
-
         </section>
 
-        <nav
-            class="wizard-progress"
-            aria-label="Progreso de configuración">
-
-            <button
-                type="button"
-                class="wizard-step-button active"
-                data-step-target="1">
-
+        <nav class="wizard-progress" aria-label="Progreso de configuración">
+            <button type="button" class="wizard-step-button active" data-step-target="1">
                 <span>1</span>
-
                 <div>
-                    <strong>Fuentes</strong>
-                    <small>Origen y destino</small>
+                    <strong>Origen y destino</strong>
+                    <small>Proceso y tablas</small>
                 </div>
-
             </button>
 
-            <div class="wizard-progress-line">
-            </div>
-
-            <button
-                type="button"
-                class="wizard-step-button"
-                data-step-target="2"
-                disabled>
-
+            <button type="button" class="wizard-step-button" data-step-target="2" disabled>
                 <span>2</span>
-
                 <div>
-                    <strong>Mapeo</strong>
-                    <small>Claves y columnas</small>
+                    <strong>Análisis</strong>
+                    <small>Recomendación Gemini</small>
                 </div>
-
             </button>
 
-            <div class="wizard-progress-line">
-            </div>
-
-            <button
-                type="button"
-                class="wizard-step-button"
-                data-step-target="3"
-                disabled>
-
+            <button type="button" class="wizard-step-button" data-step-target="3" disabled>
                 <span>3</span>
-
                 <div>
-                    <strong>Controles</strong>
-                    <small>Métricas y tolerancias</small>
+                    <strong>Reglas</strong>
+                    <small>Umbrales y tolerancias</small>
                 </div>
-
             </button>
 
-            <div class="wizard-progress-line">
-            </div>
-
-            <button
-                type="button"
-                class="wizard-step-button"
-                data-step-target="4"
-                disabled>
-
+            <button type="button" class="wizard-step-button" data-step-target="4" disabled>
                 <span>4</span>
-
                 <div>
-                    <strong>Publicación</strong>
-                    <small>Validar y confirmar</small>
+                    <strong>Confirmación</strong>
+                    <small>Validar y publicar</small>
                 </div>
-
             </button>
-
         </nav>
 
         <section class="wizard-layout">
 
             <article class="wizard-main-panel">
 
-                <section
-                    id="wizard-step-1"
-                    class="wizard-step-panel">
-
+                <!-- PASO 1 -->
+                <section id="wizard-step-1" class="wizard-step-panel">
                     <header class="panel-header">
-
                         <div>
-
-                            <span class="panel-eyebrow">
-                                PASO 1 DE 4
-                            </span>
-
-                            <h2>
-                                Selecciona origen y destino
-                            </h2>
-
+                            <span class="panel-eyebrow">PASO 1</span>
+                            <h2>Define el proceso y las tablas</h2>
                         </div>
 
-                    </header>
-
-                    <div class="wizard-panel-content">
-
-                        <div class="wizard-form-grid">
-
-                            <section class="wizard-source-box">
-
-                                <span class="wizard-source-label">
-                                    ORIGEN
-                                </span>
-
-                                <div class="form-field">
-
-                                    <label for="source-connection">
-                                        Conexión
-                                    </label>
-
-                                    <select
-                                        id="source-connection">
-
-                                        <option value="">
-                                            Cargando conexiones...
-                                        </option>
-
-                                    </select>
-
-                                </div>
-
-                                <div class="form-field">
-
-                                    <label for="source-dataset">
-                                        Dataset
-                                    </label>
-
-                                    <select
-                                        id="source-dataset"
-                                        disabled>
-
-                                        <option value="">
-                                            Selecciona una conexión
-                                        </option>
-
-                                    </select>
-
-                                </div>
-
-                                <div class="form-field">
-
-                                    <label for="source-table">
-                                        Tabla
-                                    </label>
-
-                                    <select
-                                        id="source-table"
-                                        disabled>
-
-                                        <option value="">
-                                            Selecciona un dataset
-                                        </option>
-
-                                    </select>
-
-                                </div>
-
-                            </section>
-
-                            <div class="wizard-direction-symbol">
-                                →
-                            </div>
-
-                            <section class="wizard-source-box">
-
-                                <span class="wizard-source-label">
-                                    DESTINO
-                                </span>
-
-                                <div class="form-field">
-
-                                    <label for="target-connection">
-                                        Conexión
-                                    </label>
-
-                                    <select
-                                        id="target-connection">
-
-                                        <option value="">
-                                            Cargando conexiones...
-                                        </option>
-
-                                    </select>
-
-                                </div>
-
-                                <div class="form-field">
-
-                                    <label for="target-dataset">
-                                        Dataset
-                                    </label>
-
-                                    <select
-                                        id="target-dataset"
-                                        disabled>
-
-                                        <option value="">
-                                            Selecciona una conexión
-                                        </option>
-
-                                    </select>
-
-                                </div>
-
-                                <div class="form-field">
-
-                                    <label for="target-table">
-                                        Tabla
-                                    </label>
-
-                                    <select
-                                        id="target-table"
-                                        disabled>
-
-                                        <option value="">
-                                            Selecciona un dataset
-                                        </option>
-
-                                    </select>
-
-                                </div>
-
-                            </section>
-
-                        </div>
-
-                        <div
-                            id="source-selection-summary"
-                            class="wizard-selection-summary"
-                            hidden>
-
-                            <div>
-
-                                <span>Origen</span>
-
-                                <strong id="summary-source-path">
-                                    —
-                                </strong>
-
-                            </div>
-
-                            <span>→</span>
-
-                            <div>
-
-                                <span>Destino</span>
-
-                                <strong id="summary-target-path">
-                                    —
-                                </strong>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </section>
-
-                <section
-                    id="wizard-step-2"
-                    class="wizard-step-panel"
-                    hidden>
-
-                    <header class="panel-header">
-
-                        <div>
-
-                            <span class="panel-eyebrow">
-                                PASO 2 DE 4
-                            </span>
-
-                            <h2>
-                                Define el mapeo de comparación
-                            </h2>
-
-                        </div>
-
-                        <span
-                            id="common-column-count"
-                            class="neutral-chip">
-                            0 columnas comunes
-                        </span>
-
-                    </header>
-
-                    <div class="wizard-panel-content">
-
-                        <div
-                            id="metadata-analysis-loading"
-                            class="execution-loading"
-                            hidden>
-
-                            Analizando columnas comunes…
-
-                        </div>
-
-                        <section class="wizard-insight-card">
-
-                            <div class="gemini-symbol">
-                                ✦
-                            </div>
-
-                            <div>
-
-                                <strong>
-                                    Propuesta automática
-                                </strong>
-
-                                <p id="mapping-recommendation">
-                                    Seleccionaremos claves, fechas y métricas
-                                    utilizando únicamente la metadata común.
-                                </p>
-
-                            </div>
-
-                        </section>
-
-                        <div class="wizard-mapping-grid">
-
-                            <div class="form-field">
-
-                                <label for="business-key-select">
-                                    Claves de negocio
-                                </label>
-
-                                <select
-                                    id="business-key-select"
-                                    multiple
-                                    size="8">
-                                </select>
-
-                                <small>
-                                    Usa Ctrl o Cmd para seleccionar varias.
-                                </small>
-
-                            </div>
-
-                            <div class="form-field">
-
-                                <label for="date-column-select">
-                                    Columna de fecha
-                                </label>
-
-                                <select id="date-column-select">
-
-                                    <option value="">
-                                        Sin columna de fecha
-                                    </option>
-
-                                </select>
-
-                                <small>
-                                    Se utilizará para el filtro por fecha de negocio.
-                                </small>
-
-                            </div>
-
-                        </div>
-
-                        <div class="form-field">
-
-                            <label>
-                                Columnas disponibles en ambas tablas
-                            </label>
-
-                            <div
-                                id="common-columns-grid"
-                                class="common-columns-grid">
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </section>
-
-                <section
-                    id="wizard-step-3"
-                    class="wizard-step-panel"
-                    hidden>
-
-                    <header class="panel-header">
-
-                        <div>
-
-                            <span class="panel-eyebrow">
-                                PASO 3 DE 4
-                            </span>
-
-                            <h2>
-                                Configura métricas y tolerancias
-                            </h2>
-
-                        </div>
-
-                    </header>
-
-                    <div class="wizard-panel-content">
-
-                        <div class="form-field">
-
-                            <label>
-                                Métricas numéricas a comparar
-                            </label>
-
-                            <div
-                                id="sum-columns-grid"
-                                class="common-columns-grid">
-                            </div>
-
-                            <small>
-                                Se compararán las sumas entre origen y destino.
-                            </small>
-
-                        </div>
-
-                        <div class="wizard-control-grid">
-
-                            <div class="form-field">
-
-                                <label for="row-tolerance">
-                                    Tolerancia de filas
-                                </label>
-
-                                <input
-                                    id="row-tolerance"
-                                    type="number"
-                                    min="0"
-                                    step="1"
-                                    value="0">
-
-                                <small>
-                                    Diferencia máxima aceptada de registros.
-                                </small>
-
-                            </div>
-
-                            <div class="form-field">
-
-                                <label for="amount-tolerance">
-                                    Tolerancia de montos
-                                </label>
-
-                                <input
-                                    id="amount-tolerance"
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    value="0">
-
-                                <small>
-                                    Diferencia absoluta aceptada por métrica.
-                                </small>
-
-                            </div>
-
-                        </div>
-
-                        <div class="wizard-control-grid">
-
-                            <div class="form-field">
-
-                                <label for="source-filter">
-                                    Filtro adicional de origen
-                                </label>
-
-                                <input
-                                    id="source-filter"
-                                    type="text"
-                                    placeholder="Ej. status = 'ACTIVE'">
-
-                                <small>
-                                    No incluyas el filtro de fecha.
-                                </small>
-
-                            </div>
-
-                            <div class="form-field">
-
-                                <label for="target-filter">
-                                    Filtro adicional de destino
-                                </label>
-
-                                <input
-                                    id="target-filter"
-                                    type="text"
-                                    placeholder="Ej. active_flag = TRUE">
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </section>
-
-                <section
-                    id="wizard-step-4"
-                    class="wizard-step-panel"
-                    hidden>
-
-                    <header class="panel-header">
-
-                        <div>
-
-                            <span class="panel-eyebrow">
-                                PASO 4 DE 4
-                            </span>
-
-                            <h2>
-                                Revisa y publica la cuadratura
-                            </h2>
-
-                        </div>
-
-                        <span
-                            id="wizard-publication-status"
-                            class="neutral-chip">
-                            BORRADOR
-                        </span>
-
+                        <span class="neutral-chip">Configuración guiada</span>
                     </header>
 
                     <div class="wizard-panel-content">
 
                         <div class="wizard-publication-grid">
-
                             <div class="form-field">
-
                                 <label for="process-name">
-                                    Nombre del proceso
+                                    Nombre del proceso <strong>*</strong>
                                 </label>
-
-                                <input
-                                    id="process-name"
-                                    type="text"
-                                    maxlength="160"
-                                    placeholder="Ej. Cuadratura de ventas Bronze vs Gold">
-
+                                <input id="process-name"
+                                       type="text"
+                                       maxlength="160"
+                                       value="Cuadratura dinámica"
+                                       placeholder="Ej. Cuadratura de ventas Bronze vs Gold"
+                                       required>
                             </div>
 
                             <div class="form-field">
-
                                 <label for="domain-name">
-                                    Dominio
+                                    Dominio <strong>*</strong>
                                 </label>
-
-                                <input
-                                    id="domain-name"
-                                    type="text"
-                                    maxlength="100"
-                                    placeholder="Ej. Ventas">
-
+                                <input id="domain-name"
+                                       type="text"
+                                       maxlength="100"
+                                       placeholder="Ej. Ventas"
+                                       required>
                             </div>
-
                         </div>
 
                         <div class="form-field">
-
                             <label for="reconciliation-description">
                                 Descripción
                             </label>
-
-                            <textarea
-                                id="reconciliation-description"
-                                rows="3"
-                                placeholder="Propósito y alcance de la cuadratura">
-                            </textarea>
-
+                            <textarea id="reconciliation-description"
+                                      rows="3"
+                                      placeholder="Describe el objetivo de la cuadratura"></textarea>
                         </div>
 
-                        <div class="form-field">
+                        <div class="wizard-form-grid">
+                            <section class="wizard-source-box">
+                                <header class="wizard-source-heading">
+                                    <span class="wizard-source-dot wizard-source-dot-origin"></span>
+                                    <div>
+                                        <strong>Origen</strong>
+                                        <small>Tabla que entrega los datos</small>
+                                    </div>
+                                </header>
 
+                                <div class="form-field">
+                                    <label for="source-connection">Conexión *</label>
+                                    <select id="source-connection" required>
+                                        <option value="">Cargando conexiones...</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="source-dataset">Dataset *</label>
+                                    <select id="source-dataset" disabled required>
+                                        <option value="">Selecciona una conexión</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="source-table">Tabla *</label>
+                                    <select id="source-table" disabled required>
+                                        <option value="">Selecciona un dataset</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="source-filter">Filtro opcional</label>
+                                    <input id="source-filter"
+                                           type="text"
+                                           placeholder="Ej. full_date = @business_date">
+                                </div>
+                            </section>
+
+                            <div class="wizard-direction-symbol">→</div>
+
+                            <section class="wizard-source-box">
+                                <header class="wizard-source-heading">
+                                    <span class="wizard-source-dot wizard-source-dot-target"></span>
+                                    <div>
+                                        <strong>Destino</strong>
+                                        <small>Tabla que recibe los datos</small>
+                                    </div>
+                                </header>
+
+                                <div class="form-field">
+                                    <label for="target-connection">Conexión *</label>
+                                    <select id="target-connection" required>
+                                        <option value="">Cargando conexiones...</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="target-dataset">Dataset *</label>
+                                    <select id="target-dataset" disabled required>
+                                        <option value="">Selecciona una conexión</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="target-table">Tabla *</label>
+                                    <select id="target-table" disabled required>
+                                        <option value="">Selecciona un dataset</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="target-filter">Filtro opcional</label>
+                                    <input id="target-filter"
+                                           type="text"
+                                           placeholder="Ej. full_date = @business_date">
+                                </div>
+                            </section>
+                        </div>
+
+                        <div id="source-selection-summary"
+                             class="wizard-selection-summary"
+                             hidden>
+                            <div>
+                                <span>Origen</span>
+                                <strong id="summary-source-path">—</strong>
+                            </div>
+                            <span>→</span>
+                            <div>
+                                <span>Destino</span>
+                                <strong id="summary-target-path">—</strong>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PASO 2 -->
+                <section id="wizard-step-2" class="wizard-step-panel" hidden>
+                    <header class="panel-header">
+                        <div>
+                            <span class="panel-eyebrow">PASO 2</span>
+                            <h2>Análisis y selección de métricas</h2>
+                            <p>
+                                Gemini recomienda métricas, pero la selección final
+                                siempre queda bajo control del usuario.
+                            </p>
+                        </div>
+
+                        <span id="common-column-count" class="neutral-chip">
+                            0 columnas comunes
+                        </span>
+                    </header>
+
+                    <div class="wizard-panel-content">
+                        <div id="metadata-analysis-loading"
+                             class="execution-loading"
+                             hidden>
+                            Analizando tablas…
+                        </div>
+
+                        <section class="wizard-insight-card">
+                            <div class="gemini-symbol">✦</div>
+                            <div>
+                                <strong>Recomendación Gemini</strong>
+                                <p id="mapping-recommendation">
+                                    Analizando claves, fechas, métricas de conteo
+                                    y métricas de sumarización.
+                                </p>
+                            </div>
+                        </section>
+
+                        <div class="wizard-mapping-grid">
+                            <div class="form-field">
+                                <label for="business-key-select">
+                                    Claves de negocio
+                                </label>
+                                <select id="business-key-select"
+                                        multiple
+                                        size="8"></select>
+                                <small>
+                                    Selecciona una o más columnas para relacionar
+                                    origen y destino.
+                                </small>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="date-column-select">
+                                    Columna de fecha
+                                </label>
+                                <select id="date-column-select">
+                                    <option value="">Sin columna de fecha</option>
+                                </select>
+                                <small>
+                                    Se utilizará durante ejecuciones por fecha de negocio.
+                                </small>
+                            </div>
+                        </div>
+
+                        <section class="metric-selection-section">
+                            <header>
+                                <div>
+                                    <span class="panel-eyebrow">CONTEO</span>
+                                    <h3>Métricas para conteo</h3>
+                                    <p>
+                                        Gemini propone columnas categóricas o claves.
+                                        Puedes marcar o desmarcar libremente.
+                                    </p>
+                                </div>
+                                <span id="count-metric-count" class="neutral-chip">
+                                    0 seleccionadas
+                                </span>
+                            </header>
+
+                            <div id="count-columns-grid"
+                                 class="metric-selection-grid"></div>
+                        </section>
+
+                        <section class="metric-selection-section">
+                            <header>
+                                <div>
+                                    <span class="panel-eyebrow">SUMARIZACIÓN</span>
+                                    <h3>Métricas para sumarización</h3>
+                                    <p>
+                                        Gemini propone columnas numéricas compatibles.
+                                        Selecciona solo las relevantes para el negocio.
+                                    </p>
+                                </div>
+                                <span id="sum-metric-count" class="neutral-chip">
+                                    0 seleccionadas
+                                </span>
+                            </header>
+
+                            <div id="sum-columns-grid"
+                                 class="metric-selection-grid"></div>
+                        </section>
+
+                        <div class="form-field">
+                            <label>Columnas compatibles encontradas</label>
+                            <div id="common-columns-grid"
+                                 class="common-columns-grid"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PASO 3 -->
+                <section id="wizard-step-3" class="wizard-step-panel" hidden>
+                    <header class="panel-header">
+                        <div>
+                            <span class="panel-eyebrow">PASO 3</span>
+                            <h2>Define umbrales de aceptación</h2>
+                            <p>
+                                Establece las diferencias máximas aceptadas
+                                antes de considerar la cuadratura observada.
+                            </p>
+                        </div>
+                    </header>
+
+                    <div class="wizard-panel-content">
+
+                        <section class="wizard-insight-card">
+                            <div class="gemini-symbol">✦</div>
+                            <div>
+                                <strong>Interpretación de umbrales</strong>
+                                <p>
+                                    Los controles son determinísticos. Gemini explica
+                                    el resultado, pero no altera las tolerancias definidas.
+                                </p>
+                            </div>
+                        </section>
+
+                        <div class="threshold-grid">
+                            <article class="threshold-card">
+                                <span class="panel-eyebrow">CONTEO TOTAL</span>
+                                <h3>Diferencia de filas</h3>
+                                <p>
+                                    Diferencia máxima permitida entre el total
+                                    de registros del origen y el destino.
+                                </p>
+                                <div class="form-field">
+                                    <label for="row-tolerance">
+                                        Umbral de filas
+                                    </label>
+                                    <input id="row-tolerance"
+                                           type="number"
+                                           min="0"
+                                           step="1"
+                                           value="0">
+                                </div>
+                            </article>
+
+                            <article class="threshold-card">
+                                <span class="panel-eyebrow">CONTEOS POR COLUMNA</span>
+                                <h3>Diferencia aceptada</h3>
+                                <p>
+                                    Diferencia máxima permitida para cada
+                                    métrica de conteo seleccionada.
+                                </p>
+                                <div class="form-field">
+                                    <label for="count-tolerance">
+                                        Umbral de conteo
+                                    </label>
+                                    <input id="count-tolerance"
+                                           type="number"
+                                           min="0"
+                                           step="1"
+                                           value="0">
+                                </div>
+                            </article>
+
+                            <article class="threshold-card">
+                                <span class="panel-eyebrow">SUMARIZACIÓN</span>
+                                <h3>Diferencia aceptada</h3>
+                                <p>
+                                    Diferencia absoluta máxima permitida
+                                    para cada suma seleccionada.
+                                </p>
+                                <div class="form-field">
+                                    <label for="amount-tolerance">
+                                        Umbral de sumarización
+                                    </label>
+                                    <input id="amount-tolerance"
+                                           type="number"
+                                           min="0"
+                                           step="0.01"
+                                           value="0">
+                                </div>
+                            </article>
+                        </div>
+
+                        <section class="selected-metrics-review">
+                            <header>
+                                <span class="panel-eyebrow">SELECCIÓN ACTUAL</span>
+                                <h3>Métricas que serán publicadas</h3>
+                            </header>
+
+                            <div id="selected-metrics-summary"
+                                 class="wizard-review-grid"></div>
+                        </section>
+                    </div>
+                </section>
+
+                <!-- PASO 4 -->
+                <section id="wizard-step-4" class="wizard-step-panel" hidden>
+                    <header class="panel-header">
+                        <div>
+                            <span class="panel-eyebrow">PASO 4</span>
+                            <h2>Confirma y publica la reconciliación</h2>
+                            <p>
+                                Guarda el borrador, valida el contrato y publica
+                                la cuadratura en el catálogo.
+                            </p>
+                        </div>
+
+                        <span id="wizard-publication-status"
+                              class="neutral-chip">
+                            BORRADOR
+                        </span>
+                    </header>
+
+                    <div class="wizard-panel-content">
+
+                        <div class="form-field">
                             <label for="wizard-requested-by">
                                 Responsable
                             </label>
-
-                            <input
-                                id="wizard-requested-by"
-                                type="email"
-                                value="julio.cordova@gmail.com">
-
+                            <input id="wizard-requested-by"
+                                   type="email"
+                                   value="julio.cordova@gmail.com">
                         </div>
 
                         <section class="wizard-review-card">
-
                             <header>
-
-                                <span class="panel-eyebrow">
-                                    RESUMEN
-                                </span>
-
-                                <h3>
-                                    Configuración propuesta
-                                </h3>
-
+                                <span class="panel-eyebrow">RESUMEN</span>
+                                <h3>Configuración propuesta</h3>
                             </header>
 
-                            <div
-                                id="wizard-review-content"
-                                class="wizard-review-grid">
-                            </div>
-
+                            <div id="wizard-review-content"
+                                 class="wizard-review-grid"></div>
                         </section>
 
-                        <section
-                            id="wizard-validation-section"
-                            class="validation-result"
-                            hidden>
-
+                        <section id="wizard-validation-section"
+                                 class="validation-result"
+                                 hidden>
                             <header class="panel-header">
-
                                 <div>
-
-                                    <span class="panel-eyebrow">
-                                        VALIDACIÓN
-                                    </span>
-
-                                    <h2>
-                                        Checklist del backend
-                                    </h2>
-
+                                    <span class="panel-eyebrow">VALIDACIÓN</span>
+                                    <h2>Checklist del backend</h2>
                                 </div>
 
-                                <span
-                                    id="wizard-validation-status"
-                                    class="neutral-chip">
+                                <span id="wizard-validation-status"
+                                      class="neutral-chip">
                                     PENDIENTE
                                 </span>
-
                             </header>
 
-                            <div
-                                id="wizard-validation-content"
-                                class="validation-checklist">
-                            </div>
-
+                            <div id="wizard-validation-content"
+                                 class="validation-checklist"></div>
                         </section>
-
                     </div>
-
                 </section>
 
-                <div
-                    id="wizard-message"
-                    class="message wizard-message"
-                    hidden>
-                </div>
+                <div id="wizard-message"
+                     class="message wizard-message"
+                     hidden></div>
 
                 <footer class="wizard-actions">
-
-                    <button
-                        id="wizard-back-button"
-                        type="button"
-                        class="enterprise-button enterprise-button-secondary"
-                        disabled>
-
+                    <button id="wizard-back-button"
+                            type="button"
+                            class="enterprise-button enterprise-button-secondary"
+                            disabled>
                         Anterior
-
                     </button>
 
                     <div class="wizard-actions-right">
-
-                        <button
-                            id="wizard-save-button"
-                            type="button"
-                            class="enterprise-button enterprise-button-secondary"
-                            hidden>
-
+                        <button id="wizard-save-button"
+                                type="button"
+                                class="enterprise-button enterprise-button-secondary"
+                                hidden>
                             Guardar borrador
-
                         </button>
 
-                        <button
-                            id="wizard-validate-button"
-                            type="button"
-                            class="enterprise-button enterprise-button-secondary"
-                            hidden
-                            disabled>
-
+                        <button id="wizard-validate-button"
+                                type="button"
+                                class="enterprise-button enterprise-button-secondary"
+                                hidden
+                                disabled>
                             Validar configuración
-
                         </button>
 
-                        <button
-                            id="wizard-publish-button"
-                            type="button"
-                            class="enterprise-button enterprise-button-primary"
-                            hidden
-                            disabled>
-
+                        <button id="wizard-publish-button"
+                                type="button"
+                                class="enterprise-button enterprise-button-primary"
+                                hidden
+                                disabled>
                             Confirmar y publicar
-
                         </button>
 
-                        <button
-                            id="wizard-next-button"
-                            type="button"
-                            class="enterprise-button enterprise-button-primary">
-
-                            Continuar
-
+                        <button id="wizard-next-button"
+                                type="button"
+                                class="enterprise-button enterprise-button-primary">
+                            Analizar tablas
                         </button>
-
                     </div>
-
                 </footer>
-
             </article>
 
             <aside class="wizard-assistant-panel">
-
                 <header class="gemini-panel-header">
-
-                    <div class="gemini-symbol">
-                        ✦
-                    </div>
-
+                    <div class="gemini-symbol">✦</div>
                     <div>
-
-                        <strong>
-                            Gemini Configuration Advisor
-                        </strong>
-
-                        <span>
-                            Asistente de diseño
-                        </span>
-
+                        <strong>Gemini Configuration Advisor</strong>
+                        <span>Asistente de configuración</span>
                     </div>
-
                 </header>
 
                 <div class="gemini-panel-content">
-
-                    <h3 id="wizard-advisor-title">
-                        Selecciona las fuentes
-                    </h3>
-
+                    <h3 id="wizard-advisor-title">Define el proceso</h3>
                     <p id="wizard-advisor-message">
-                        Comienza eligiendo una tabla de origen
-                        y otra de destino.
+                        Completa el proceso, dominio y tablas.
                     </p>
 
-                    <div class="gemini-divider">
-                    </div>
+                    <div class="gemini-divider"></div>
 
-                    <h3>
-                        Checklist
-                    </h3>
-
-                    <div
-                        id="wizard-checklist"
-                        class="design-checklist">
-                    </div>
-
+                    <h3>Checklist</h3>
+                    <div id="wizard-checklist"
+                         class="design-checklist"></div>
                 </div>
-
             </aside>
-
         </section>
 
-        <footer
-            th:replace="~{fragments/layout :: footer}">
-        </footer>
-
+        <footer th:replace="~{fragments/layout :: footer}"></footer>
     </main>
-
 </div>
 
-<script
-    th:src="@{/js/reconciliation/wizard.js}">
-</script>
-
+<script th:src="@{/js/reconciliation/wizard.js}"></script>
 </body>
-
 </html>
