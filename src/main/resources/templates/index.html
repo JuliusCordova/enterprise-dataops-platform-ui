@@ -39,7 +39,7 @@
         <header
             th:replace="~{fragments/layout :: topbar(
                 'Enterprise DataOps',
-                'Agentes especializados para comprender, validar y reconciliar datos'
+                'Agentes especializados para comprender, validar, reconciliar y refinar datos'
             )}">
         </header>
 
@@ -57,7 +57,7 @@
 
                 <p>
                     Una plataforma modular para descubrir,
-                    perfilar, validar y reconciliar datos
+                    perfilar, validar, reconciliar y refinar datos
                     mediante agentes especializados,
                     métricas determinísticas y explicaciones
                     asistidas por Gemini.
@@ -81,6 +81,12 @@
                         class="enterprise-button enterprise-button-secondary"
                         th:href="@{/reconciliation}">
                         Ejecutar cuadratura
+                    </a>
+
+                    <a
+                        class="enterprise-button enterprise-button-secondary"
+                        th:href="@{/silver-refinement}">
+                        Refinar a Silver
                     </a>
 
                 </div>
@@ -114,11 +120,11 @@
                 </span>
 
                 <strong>
-                    4
+                    5
                 </strong>
 
                 <small>
-                    Profiling, reglas, ejecución y cuadratura
+                    Profiling, reglas, ejecución, cuadratura y refinamiento
                 </small>
 
             </article>
@@ -142,15 +148,15 @@
             <article class="enterprise-kpi-card">
 
                 <span>
-                    Ejecución
+                    Persistencia operativa
                 </span>
 
                 <strong>
-                    On demand
+                    GCS
                 </strong>
 
                 <small>
-                    Programación periódica en roadmap
+                    Workflows versionados y snapshots inmutables
                 </small>
 
             </article>
@@ -282,7 +288,7 @@
                     th:href="@{/reconciliation}">
 
                     <span class="enterprise-badge enterprise-badge-available">
-                        INTEGRACIÓN
+                        DISPONIBLE
                     </span>
 
                     <div class="enterprise-agent-card-icon">
@@ -297,6 +303,34 @@
                         Ejecuta cuadraturas entre origen y
                         destino, revisa diferencias y obtén una
                         explicación ejecutiva asistida.
+                    </p>
+
+                    <span class="enterprise-agent-card-action">
+                        Abrir agente →
+                    </span>
+
+                </a>
+
+                <a
+                    class="enterprise-agent-card enabled"
+                    th:href="@{/silver-refinement}">
+
+                    <span class="enterprise-badge enterprise-badge-available">
+                        DISPONIBLE
+                    </span>
+
+                    <div class="enterprise-agent-card-icon">
+                        ◆
+                    </div>
+
+                    <h3>
+                        Silver Refinement
+                    </h3>
+
+                    <p>
+                        Diseña y gobierna workflows Bronze → Silver,
+                        confirma fuentes, define reglas y conserva
+                        versiones persistidas en Cloud Storage.
                     </p>
 
                     <span class="enterprise-agent-card-action">
