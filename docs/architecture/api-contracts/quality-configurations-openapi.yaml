@@ -1,0 +1,119 @@
+openapi: 3.1.0
+info:
+  title: Enterprise DataOps Quality Configuration API
+  version: 0.1.0-draft
+  description: Propuesta canónica. No reemplaza contratos productivos hasta su implementación y certificación.
+paths:
+  /data-quality/configurations:
+    get:
+      operationId: listQualityConfigurations
+      responses:
+        '200': { description: Lista de configuraciones }
+    post:
+      operationId: createQualityConfiguration
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/QualityConfigurationCreateRequest' }
+      responses:
+        '201': { description: Configuración y versión DRAFT creadas }
+        '409': { description: Conflicto de idempotencia o concurrencia }
+  /data-quality/configurations/{configurationId}:
+    parameters:
+      - $ref: '#/components/parameters/ConfigurationId'
+    get:
+      operationId: getQualityConfiguration
+      responses:
+        '200': { description: Detalle de configuración }
+        '404': { description: No encontrada }
+    put:
+      operationId: updateQualityConfiguration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/QualityConfigurationUpdateRequest' }
+      responses:
+        '200': { description: DRAFT actualizado o nueva versión DRAFT creada }
+        '409': { description: Versión desactualizada }
+    delete:
+      operationId: archiveQualityConfiguration
+      responses:
+        '204': { description: Configuración archivada lógicamente }
+  /data-quality/configurations/{configurationId}/publish:
+    parameters:
+      - $ref: '#/components/parameters/ConfigurationId'
+    post:
+      operationId: publishQualityConfiguration
+      responses:
+        '200': { description: Versión publicada y anterior marcada SUPERSEDED }
+        '409': { description: Validación o transición inválida }
+  /data-quality/configurations/{configurationId}/versions:
+    parameters:
+      - $ref: '#/components/parameters/ConfigurationId'
+    get:
+      operationId: listQualityConfigurationVersions
+      responses:
+        '200': { description: Historial de versiones }
+    post:
+      operationId: createQualityConfigurationVersion
+      responses:
+        '201': { description: Nueva versión DRAFT creada }
+  /data-quality/configurations/{configurationId}/status:
+    parameters:
+      - $ref: '#/components/parameters/ConfigurationId'
+    patch:
+      operationId: changeQualityConfigurationStatus
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StatusChangeRequest' }
+      responses:
+        '200': { description: Estado actualizado }
+        '409': { description: Transición inválida }
+components:
+  parameters:
+    ConfigurationId:
+      name: configurationId
+      in: path
+      required: true
+      schema: { type: string, minLength: 1 }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      schema: { type: string, minLength: 8, maxLength: 128 }
+  schemas:
+    QualityConfigurationCreateRequest:
+      type: object
+      required: [name, connectionId, datasetId, tableId, rules]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        connectionId: { type: string }
+        datasetId: { type: string }
+        tableId: { type: string }
+        rules:
+          type: array
+          minItems: 1
+          items: { type: object, additionalProperties: true }
+    QualityConfigurationUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/QualityConfigurationCreateRequest'
+        - type: object
+          required: [rowVersion]
+          properties:
+            rowVersion: { type: integer, minimum: 0 }
+    StatusChangeRequest:
+      type: object
+      required: [status, rowVersion]
+      properties:
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, ARCHIVED]
+        rowVersion: { type: integer, minimum: 0 }
+        reason: { type: string }
