@@ -107,6 +107,20 @@
 
         </a>
 
+        <a
+            th:href="@{/silver-refinement}"
+            th:classappend="${activeModule == 'silver-refinement'} ? ' active' : ''">
+
+            <span class="platform-nav-icon">
+                ◆
+            </span>
+
+            <span>
+                Silver Refinement
+            </span>
+
+        </a>
+
         <span class="platform-navigation-label">
             Gobierno y operación
         </span>
@@ -151,11 +165,11 @@
         <div>
 
             <strong>
-                Backend operativo
+                Backends operativos
             </strong>
 
             <small>
-                Cloud Run · BigQuery · Gemini
+                Cloud Run · BigQuery · GCS · Gemini
             </small>
 
         </div>
@@ -210,7 +224,7 @@
     </span>
 
     <span>
-        Profiling · Quality · Reconciliation · Gemini
+        Profiling · Quality · Reconciliation · Silver · Gemini
     </span>
 
 </footer>
