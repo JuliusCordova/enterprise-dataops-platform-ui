@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Silver Workflow | Enterprise DataOps</title>
+<link rel="stylesheet" th:href="@{/css/platform.css}">
+<link rel="stylesheet" th:href="@{/css/enterprise-theme.css}">
+<link rel="stylesheet" th:href="@{/css/data-quality-experience-v2.css}">
+</head>
+<body><div class="enterprise-shell">
+<aside th:replace="~{fragments/layout :: sidebar('silver-refinement')}"></aside>
+<main class="enterprise-main">
+<header th:replace="~{fragments/layout :: topbar('Silver Workflow','Mapping, artefactos, Dataproc y gobierno por versión')}"></header>
+<input id="workflow-id" type="hidden" th:value="${workflowId}">
+<nav class="dq-flow">
+<div class="dq-flow-step active"><span>1</span><div><strong>Fuente</strong><small>Bronze y esquema</small></div></div>
+<div class="dq-flow-step active"><span>2</span><div><strong>Mapping</strong><small>Bronze → Silver</small></div></div>
+<div class="dq-flow-step"><span>3</span><div><strong>Artefactos</strong><small>PySpark y DDL</small></div></div>
+<div class="dq-flow-step"><span>4</span><div><strong>Dataproc</strong><small>Validar y ejecutar</small></div></div>
+</nav>
+<section class="dq-layout"><article class="dq-main-panel">
+<section class="dq-step-panel"><header class="dq-panel-header"><div><span class="panel-eyebrow">WORKFLOW</span><h2 id="wf-title">Cargando...</h2><p id="wf-source">—</p></div><span id="wf-status" class="neutral-chip">—</span></header>
+<div class="dq-panel-content"><div class="dq-form-grid-3">
+<div class="form-field"><label>Spec ID</label><input id="spec-id" placeholder="Se requiere para generar y ejecutar"></div>
+<div class="form-field"><label>Proyecto destino</label><input id="target-project" value="proyectopersonal-480420"></div>
+<div class="form-field"><label>Dataset destino</label><input id="target-dataset" value="silver"></div>
+<div class="form-field"><label>Tabla destino</label><input id="target-table" placeholder="customer_silver"></div>
+<div class="form-field"><label>Versión mapping</label><input id="mapping-version" type="number" min="1" value="1"></div>
+<div class="form-field"><label>Generado por</label><input id="generated-by" value="julio.cordova"></div>
+</div></div></section>
+<section class="dq-step-panel"><header class="dq-panel-header"><div><span class="panel-eyebrow">MAPPING BRONZE → SILVER</span><h2>Columnas y transformaciones</h2><p>Define nombre, tipo, origen y expresión. El mapping se envía al generador de artefactos.</p></div><button id="add-column" class="enterprise-button enterprise-button-secondary">Agregar columna</button></header>
+<div class="dq-panel-content"><div class="dq-table-wrapper"><table class="dq-data-table"><thead><tr><th>Silver</th><th>Tipo</th><th>Origen</th><th>Transformación</th><th>Nullable</th><th></th></tr></thead><tbody id="mapping-body"></tbody></table></div></div></section>
+<section class="dq-step-panel"><header class="dq-panel-header"><div><span class="panel-eyebrow">GENERACIÓN</span><h2>Artefactos versionados</h2><p>Genera el paquete de código y DDL a partir del mapping.</p></div></header>
+<div class="dq-panel-content"><div class="dq-actions"><button id="generate-ddl" class="enterprise-button enterprise-button-secondary">Generar DDL</button><button id="generate-package" class="enterprise-button enterprise-button-primary">Generar paquete</button></div><pre id="artifact-output" class="message dq-message">Sin artefactos generados.</pre></div></section>
+<section class="dq-step-panel"><header class="dq-panel-header"><div><span class="panel-eyebrow">DATAPROC</span><h2>Validar y ejecutar</h2><p>Crea una ejecución desde el spec, valida el paquete y envíalo a Dataproc.</p></div></header>
+<div class="dq-panel-content"><div class="dq-actions"><button id="create-execution" class="enterprise-button enterprise-button-secondary">Crear ejecución</button><button id="validate-package" class="enterprise-button enterprise-button-secondary" disabled>Validar paquete</button><button id="submit-execution" class="enterprise-button enterprise-button-primary" disabled>Ejecutar Dataproc</button><button id="sync-status" class="enterprise-button enterprise-button-secondary" disabled>Actualizar estado</button></div><pre id="execution-output" class="message dq-message">Sin ejecución creada.</pre></div></section>
+<div id="silver-detail-message" class="message dq-message" hidden></div>
+</article><aside class="dq-copilot-panel"><header class="gemini-panel-header"><div class="gemini-symbol">✦</div><div><strong>Gemini Silver Copilot</strong><span>Asistente de mapping</span></div></header><div class="gemini-panel-content"><h3>Generación controlada</h3><p>El frontend no inventa estados. Cada acción llama al backend Silver y muestra su respuesta real.</p></div></aside></section>
+<footer th:replace="~{fragments/layout :: footer}"></footer></main></div>
+<script th:src="@{/js/silver-refinement/workflow.js}"></script></body></html>
