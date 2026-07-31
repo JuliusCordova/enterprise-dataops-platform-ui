@@ -24,5 +24,8 @@ dataops:
   api:
     base-url: ${DATAOPS_API_URL:https://jarvis-reconciliation-agent-913797829604.us-central1.run.app}
 
+  silver:
+    base-url: ${SILVER_BACKEND_URL:https://silver-refinement-agent-mkqutd4koq-uc.a.run.app}
+
   gemini:
     enabled: ${GEMINI_COPILOT_ENABLED:true}
