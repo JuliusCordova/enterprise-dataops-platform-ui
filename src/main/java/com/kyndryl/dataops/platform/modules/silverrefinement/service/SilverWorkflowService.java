@@ -50,4 +50,8 @@ public class SilverWorkflowService {
     public Map<String, Object> saveSpecification(String workflowId, Object request) {
         return client.saveSpecification(workflowId, request);
     }
+
+    public Map<String, Object> reviewQuality(String workflowId, Object request) {
+        return client.reviewQuality(workflowId, request);
+    }
 }
