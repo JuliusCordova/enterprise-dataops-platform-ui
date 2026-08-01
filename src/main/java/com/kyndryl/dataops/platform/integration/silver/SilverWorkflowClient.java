@@ -45,6 +45,27 @@ public class SilverWorkflowClient {
         );
     }
 
+    public Map<String, Object> generateBusinessRules(String workflowId, Object request) {
+        return client.post(
+            "/silver-workflows/" + validateIdentifier(workflowId, "workflowId") + "/business-rules/generate",
+            request
+        );
+    }
+
+    public Map<String, Object> confirmBusinessRules(String workflowId, Object request) {
+        return client.post(
+            "/silver-workflows/" + validateIdentifier(workflowId, "workflowId") + "/business-rules/confirm",
+            request
+        );
+    }
+
+    public Map<String, Object> saveSpecification(String workflowId, Object request) {
+        return client.post(
+            "/silver-workflows/" + validateIdentifier(workflowId, "workflowId") + "/specification",
+            request
+        );
+    }
+
     private String validateIdentifier(String value, String fieldName) {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException(fieldName + " no puede estar vacío");
