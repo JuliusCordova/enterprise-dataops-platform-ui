@@ -57,6 +57,13 @@
 </div>
 <div class="silver-mapping-header"><div><h3>Mapping de columnas</h3><p>Origen, destino, tipo y transformación.</p></div><button id="sw-add-column" class="enterprise-button enterprise-button-secondary" type="button">Agregar columna</button></div>
 <div class="dq-table-wrapper"><table class="dq-data-table"><thead><tr><th>Origen</th><th>Destino Silver</th><th>Tipo</th><th>Transformación</th><th>Nullable</th><th></th></tr></thead><tbody id="sw-mapping-body"></tbody></table></div>
+<div class="dq-executive-summary" style="margin-top: 1.25rem;">
+<div class="gemini-symbol">!</div>
+<div><strong>Especificación pendiente</strong><p>Guarda el contrato para obtener el Spec ID antes de generar DDL o PySpark. El backend aún no expone esta operación.</p></div>
+</div>
+<div class="silver-action-grid" style="margin-top: 1rem;">
+<button id="sw-save-contract" class="enterprise-button enterprise-button-primary" type="button">Guardar contrato Silver</button>
+</div>
 </section>
 
 <section class="silver-panel" data-panel="4" hidden>
@@ -80,4 +87,5 @@
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 </main></div>
 <script th:src="@{/js/silver-refinement/new.js}"></script>
+<script th:src="@{/js/silver-refinement/spec-gate.js}"></script>
 </body></html>
