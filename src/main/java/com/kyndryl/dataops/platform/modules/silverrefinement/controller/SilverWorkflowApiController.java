@@ -82,4 +82,12 @@ public class SilverWorkflowApiController {
     ) {
         return ResponseEntity.ok(service.saveSpecification(workflowId, request));
     }
+
+    @PostMapping("/{workflowId}/quality-review")
+    public ResponseEntity<Map<String, Object>> reviewQuality(
+        @PathVariable String workflowId,
+        @RequestBody Object request
+    ) {
+        return ResponseEntity.ok(service.reviewQuality(workflowId, request));
+    }
 }
