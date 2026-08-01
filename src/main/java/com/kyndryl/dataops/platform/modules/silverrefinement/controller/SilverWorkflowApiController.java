@@ -29,16 +29,12 @@ public class SilverWorkflowApiController {
     }
 
     @PostMapping
-    public ResponseEntity<Map<String, Object>> createWorkflow(
-        @RequestBody Object request
-    ) {
+    public ResponseEntity<Map<String, Object>> createWorkflow(@RequestBody Object request) {
         return ResponseEntity.ok(service.createWorkflow(request));
     }
 
     @GetMapping("/{workflowId}")
-    public ResponseEntity<Map<String, Object>> getWorkflow(
-        @PathVariable String workflowId
-    ) {
+    public ResponseEntity<Map<String, Object>> getWorkflow(@PathVariable String workflowId) {
         return ResponseEntity.ok(service.getWorkflow(workflowId));
     }
 
@@ -51,9 +47,7 @@ public class SilverWorkflowApiController {
     }
 
     @GetMapping("/{workflowId}/business-rules")
-    public ResponseEntity<Map<String, Object>> getBusinessRules(
-        @PathVariable String workflowId
-    ) {
+    public ResponseEntity<Map<String, Object>> getBusinessRules(@PathVariable String workflowId) {
         return ResponseEntity.ok(service.getBusinessRules(workflowId));
     }
 
@@ -63,5 +57,29 @@ public class SilverWorkflowApiController {
         @RequestBody Object request
     ) {
         return ResponseEntity.ok(service.saveBusinessRulesDraft(workflowId, request));
+    }
+
+    @PostMapping("/{workflowId}/business-rules/generate")
+    public ResponseEntity<Map<String, Object>> generateBusinessRules(
+        @PathVariable String workflowId,
+        @RequestBody Object request
+    ) {
+        return ResponseEntity.ok(service.generateBusinessRules(workflowId, request));
+    }
+
+    @PostMapping("/{workflowId}/business-rules/confirm")
+    public ResponseEntity<Map<String, Object>> confirmBusinessRules(
+        @PathVariable String workflowId,
+        @RequestBody Object request
+    ) {
+        return ResponseEntity.ok(service.confirmBusinessRules(workflowId, request));
+    }
+
+    @PostMapping("/{workflowId}/specification")
+    public ResponseEntity<Map<String, Object>> saveSpecification(
+        @PathVariable String workflowId,
+        @RequestBody Object request
+    ) {
+        return ResponseEntity.ok(service.saveSpecification(workflowId, request));
     }
 }
