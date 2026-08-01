@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nuevo flujo Silver | Enterprise DataOps</title>
+<link rel="stylesheet" th:href="@{/css/platform.css}">
+<link rel="stylesheet" th:href="@{/css/enterprise-theme.css}">
+<link rel="stylesheet" th:href="@{/css/data-quality-experience-v2.css}">
+<link rel="stylesheet" th:href="@{/css/silver-refinement.css}">
+</head>
+<body><div class="enterprise-shell">
+<aside th:replace="~{fragments/layout :: sidebar('silver-refinement')}"></aside>
+<main class="enterprise-main">
+<header th:replace="~{fragments/layout :: topbar('Nuevo flujo Silver','Selecciona una fuente, perfila, mapea y genera artefactos con control por versión')}"></header>
+
+<section class="silver-wizard-shell">
+<nav class="silver-stepper" aria-label="Progreso del flujo">
+<button class="silver-step active" data-step="1"><span>1</span><div><strong>Fuente</strong><small>Conexión, dataset y tabla</small></div></button>
+<button class="silver-step" data-step="2" disabled><span>2</span><div><strong>Perfil</strong><small>Esquema y calidad inicial</small></div></button>
+<button class="silver-step" data-step="3" disabled><span>3</span><div><strong>Mapping</strong><small>Bronze → Silver</small></div></button>
+<button class="silver-step" data-step="4" disabled><span>4</span><div><strong>Artefactos</strong><small>DDL y PySpark</small></div></button>
+<button class="silver-step" data-step="5" disabled><span>5</span><div><strong>Ejecución</strong><small>Validar y ejecutar</small></div></button>
+</nav>
+
+<div id="silver-wizard-message" class="message dq-message" hidden></div>
+
+<section class="silver-workspace">
+<article class="silver-primary-panel">
+<section class="silver-panel" data-panel="1">
+<header><span class="panel-eyebrow">PASO 1 DE 5</span><h2>Selecciona la fuente Bronze</h2><p>Usa el mismo catálogo certificado que Data Profiling. No se permite escribir identificadores manualmente.</p></header>
+<div class="silver-form-grid">
+<label><span>Conexión</span><select id="sw-connection"><option value="">Cargando conexiones...</option></select></label>
+<label><span>Dataset</span><select id="sw-dataset" disabled><option value="">Selecciona una conexión</option></select></label>
+<label><span>Tabla</span><select id="sw-table" disabled><option value="">Selecciona un dataset</option></select></label>
+</div>
+<div class="silver-selection-summary" id="source-summary"><strong>Fuente pendiente</strong><span>Selecciona conexión, dataset y tabla para continuar.</span></div>
+</section>
+
+<section class="silver-panel" data-panel="2" hidden>
+<header><span class="panel-eyebrow">PASO 2 DE 5</span><h2>Valida el perfil de la tabla</h2><p>Revisa estructura, volumen y completitud antes de crear el workflow.</p></header>
+<div id="profile-progress" class="dq-executive-summary"><div class="loading-indicator"></div><div><strong>Ejecutando profiling</strong><p>Analizando la fuente seleccionada.</p></div></div>
+<div id="profile-content" hidden>
+<div class="dq-kpi-grid"><article><span>Registros</span><strong id="sw-rows">—</strong></article><article><span>Columnas</span><strong id="sw-cols">—</strong></article><article><span>Completitud</span><strong id="sw-completeness">—</strong></article><article><span>Clave candidata</span><strong id="sw-key">—</strong></article></div>
+<div class="dq-table-wrapper"><table class="dq-data-table"><thead><tr><th>Columna</th><th>Tipo</th><th>Nulos</th><th>Distintos</th><th>Rol</th></tr></thead><tbody id="sw-profile-columns"></tbody></table></div>
+</div>
+</section>
+
+<section class="silver-panel" data-panel="3" hidden>
+<header><span class="panel-eyebrow">PASO 3 DE 5</span><h2>Define el contrato Silver</h2><p>Configura destino y transformaciones. Las columnas se precargan desde el profiling.</p></header>
+<div class="silver-form-grid">
+<label><span>Proyecto destino</span><input id="sw-target-project" value="proyectopersonal-480420"></label>
+<label><span>Dataset destino</span><input id="sw-target-dataset" value="silver"></label>
+<label><span>Tabla destino</span><input id="sw-target-table"></label>
+<label><span>Versión del mapping</span><input id="sw-mapping-version" type="number" min="1" value="1"></label>
+<label><span>Responsable</span><input id="sw-generated-by" value="julio.cordova"></label>
+<label><span>Spec ID</span><input id="sw-spec-id" placeholder="Asignado por backend" readonly></label>
+</div>
+<div class="silver-mapping-header"><div><h3>Mapping de columnas</h3><p>Origen, destino, tipo y transformación.</p></div><button id="sw-add-column" class="enterprise-button enterprise-button-secondary" type="button">Agregar columna</button></div>
+<div class="dq-table-wrapper"><table class="dq-data-table"><thead><tr><th>Origen</th><th>Destino Silver</th><th>Tipo</th><th>Transformación</th><th>Nullable</th><th></th></tr></thead><tbody id="sw-mapping-body"></tbody></table></div>
+</section>
+
+<section class="silver-panel" data-panel="4" hidden>
+<header><span class="panel-eyebrow">PASO 4 DE 5</span><h2>Genera artefactos versionados</h2><p>Primero genera DDL; después genera el paquete PySpark. Cada respuesta proviene del backend.</p></header>
+<div class="silver-action-grid"><button id="sw-generate-ddl" class="enterprise-button enterprise-button-secondary">Generar DDL</button><button id="sw-generate-package" class="enterprise-button enterprise-button-primary">Generar paquete PySpark</button></div>
+<pre id="sw-artifact-output" class="silver-result">Sin artefactos generados.</pre>
+</section>
+
+<section class="silver-panel" data-panel="5" hidden>
+<header><span class="panel-eyebrow">PASO 5 DE 5</span><h2>Valida y ejecuta en Dataproc</h2><p>Crea la ejecución, valida el paquete, envía el batch y sincroniza el estado.</p></header>
+<div class="silver-action-grid"><button id="sw-create-execution" class="enterprise-button enterprise-button-secondary">Crear ejecución</button><button id="sw-validate-package" class="enterprise-button enterprise-button-secondary" disabled>Validar paquete</button><button id="sw-submit" class="enterprise-button enterprise-button-primary" disabled>Ejecutar Dataproc</button><button id="sw-sync" class="enterprise-button enterprise-button-secondary" disabled>Actualizar estado</button></div>
+<pre id="sw-execution-output" class="silver-result">Sin ejecución creada.</pre>
+</section>
+
+<footer class="silver-wizard-actions"><a class="enterprise-button enterprise-button-secondary" th:href="@{/silver-refinement}">Cancelar</a><div><button id="sw-back" class="enterprise-button enterprise-button-secondary" disabled>Anterior</button><button id="sw-next" class="enterprise-button enterprise-button-primary">Analizar fuente</button></div></footer>
+</article>
+
+<aside class="silver-guidance-panel"><span class="gemini-symbol">✦</span><h3 id="sw-help-title">Selecciona una fuente</h3><p id="sw-help-text">El sistema reutiliza el catálogo de profiling para reducir errores y mantener consistencia.</p><div class="silver-checklist"><span id="check-source">○ Fuente seleccionada</span><span id="check-profile">○ Perfil validado</span><span id="check-workflow">○ Workflow creado</span><span id="check-artifacts">○ Artefactos generados</span><span id="check-execution">○ Ejecución creada</span></div></aside>
+</section>
+</section>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</main></div>
+<script th:src="@{/js/silver-refinement/new.js}"></script>
+</body></html>
