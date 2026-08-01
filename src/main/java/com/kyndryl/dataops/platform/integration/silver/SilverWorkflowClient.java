@@ -26,44 +26,35 @@ public class SilverWorkflowClient {
     }
 
     public Map<String, Object> confirmSource(String workflowId, Object request) {
-        return client.post(
-            "/silver-workflows/" + validateIdentifier(workflowId, "workflowId") + "/confirm-source",
-            request
-        );
+        return client.post(path(workflowId, "/confirm-source"), request);
     }
 
     public Map<String, Object> getBusinessRules(String workflowId) {
-        return client.get(
-            "/silver-workflows/" + validateIdentifier(workflowId, "workflowId") + "/business-rules"
-        );
+        return client.get(path(workflowId, "/business-rules"));
     }
 
     public Map<String, Object> saveBusinessRulesDraft(String workflowId, Object request) {
-        return client.put(
-            "/silver-workflows/" + validateIdentifier(workflowId, "workflowId") + "/business-rules/draft",
-            request
-        );
+        return client.put(path(workflowId, "/business-rules/draft"), request);
     }
 
     public Map<String, Object> generateBusinessRules(String workflowId, Object request) {
-        return client.post(
-            "/silver-workflows/" + validateIdentifier(workflowId, "workflowId") + "/business-rules/generate",
-            request
-        );
+        return client.post(path(workflowId, "/business-rules/generate"), request);
     }
 
     public Map<String, Object> confirmBusinessRules(String workflowId, Object request) {
-        return client.post(
-            "/silver-workflows/" + validateIdentifier(workflowId, "workflowId") + "/business-rules/confirm",
-            request
-        );
+        return client.post(path(workflowId, "/business-rules/confirm"), request);
     }
 
     public Map<String, Object> saveSpecification(String workflowId, Object request) {
-        return client.post(
-            "/silver-workflows/" + validateIdentifier(workflowId, "workflowId") + "/specification",
-            request
-        );
+        return client.post(path(workflowId, "/specification"), request);
+    }
+
+    public Map<String, Object> reviewQuality(String workflowId, Object request) {
+        return client.post(path(workflowId, "/quality-review"), request);
+    }
+
+    private String path(String workflowId, String suffix) {
+        return "/silver-workflows/" + validateIdentifier(workflowId, "workflowId") + suffix;
     }
 
     private String validateIdentifier(String value, String fieldName) {
