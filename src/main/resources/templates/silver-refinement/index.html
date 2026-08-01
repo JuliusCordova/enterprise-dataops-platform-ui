@@ -6,19 +6,20 @@
 <link rel="stylesheet" th:href="@{/css/platform.css}">
 <link rel="stylesheet" th:href="@{/css/enterprise-theme.css}">
 <link rel="stylesheet" th:href="@{/css/data-quality-experience-v2.css}">
+<link rel="stylesheet" th:href="@{/css/silver-refinement.css}">
 </head>
 <body><div class="enterprise-shell">
 <aside th:replace="~{fragments/layout :: sidebar('silver-refinement')}"></aside>
 <main class="enterprise-main">
 <header th:replace="~{fragments/layout :: topbar('Silver Refinement','Diseña y gobierna el flujo Bronze → Silver')}"></header>
 <section class="dq-layout"><article class="dq-main-panel">
-<section class="dq-step-panel"><header class="dq-panel-header"><div><span class="panel-eyebrow">WORKFLOWS ACTIVOS</span><h2>Silver Refinement</h2><p>Consulta workflows persistidos en Cloud Storage y continúa su evolución por versión.</p></div><span class="neutral-chip">Backend productivo GCS</span></header>
+<section class="dq-step-panel"><header class="dq-panel-header"><div><span class="panel-eyebrow">WORKFLOWS SILVER</span><h2>Diseña, genera y ejecuta pipelines Bronze → Silver</h2><p>Inicia un flujo guiado desde el catálogo de datos o continúa un workflow existente.</p></div><a class="enterprise-button enterprise-button-primary" th:href="@{/silver-refinement/new}">Nuevo flujo Silver</a></header>
 <div class="dq-panel-content">
 <div id="silver-message" class="message dq-message" hidden></div>
 <div id="silver-loading" class="dq-executive-summary"><div class="loading-indicator"></div><div><strong>Cargando workflows</strong><p>Consultando Silver Refinement Agent.</p></div></div>
-<div id="silver-empty" class="dq-executive-summary" hidden><div class="gemini-symbol">✦</div><div><strong>No hay workflows</strong><p>Crea el primero desde el contrato Bronze → Silver.</p></div></div>
+<div id="silver-empty" class="dq-executive-summary" hidden><div class="gemini-symbol">✦</div><div><strong>No hay workflows</strong><p>Usa “Nuevo flujo Silver” para seleccionar fuente, perfilar, mapear y generar artefactos.</p></div></div>
 <div id="silver-table-wrap" class="dq-table-wrapper" hidden><table class="dq-data-table"><thead><tr><th>Workflow</th><th>Fuente</th><th>Estado</th><th>Versión</th><th>Paso</th><th>Actualizado</th></tr></thead><tbody id="silver-workflows"></tbody></table></div>
 </div></section>
-</article><aside class="dq-copilot-panel"><header class="gemini-panel-header"><div class="gemini-symbol">✦</div><div><strong>Gemini Silver Copilot</strong><span>Asistente contextual</span></div></header><div class="gemini-panel-content"><h3>Contrato canónico</h3><p>El frontend presenta estado y acciones; Silver Refinement conserva la lógica, versionado y persistencia.</p></div></aside></section>
+</article><aside class="dq-copilot-panel"><header class="gemini-panel-header"><div class="gemini-symbol">✦</div><div><strong>Gemini Silver Copilot</strong><span>Asistente contextual</span></div></header><div class="gemini-panel-content"><h3>Journey guiado</h3><p>Fuente → profiling → mapping → artefactos → Dataproc. Cada paso valida prerrequisitos antes de continuar.</p></div></aside></section>
 <footer th:replace="~{fragments/layout :: footer}"></footer></main></div>
 <script th:src="@{/js/silver-refinement/index.js}"></script></body></html>
