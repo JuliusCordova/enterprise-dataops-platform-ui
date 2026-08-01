@@ -15,6 +15,13 @@ public class SilverRefinementPageController {
         return "silver-refinement/index";
     }
 
+    @GetMapping("/silver-refinement/new")
+    public String newSilverWorkflow(Model model) {
+        model.addAttribute("pageTitle", "Nuevo flujo Silver");
+        model.addAttribute("activeModule", "silver-refinement");
+        return "silver-refinement/new";
+    }
+
     @GetMapping("/silver-refinement/{workflowId}")
     public String silverWorkflow(
         @PathVariable String workflowId,
