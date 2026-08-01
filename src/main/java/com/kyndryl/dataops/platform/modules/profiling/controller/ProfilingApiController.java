@@ -32,62 +32,55 @@ public class ProfilingApiController {
     }
 
     @GetMapping("/connections")
-    public ResponseEntity<Map<String, Object>>
-        getConnections() {
-
-        return ResponseEntity.ok(
-            metadataService.getConnections()
-        );
+    public ResponseEntity<Map<String, Object>> getConnections() {
+        return ResponseEntity.ok(metadataService.getConnections());
     }
 
-    @GetMapping(
-        "/connections/{connectionId}/datasets"
-    )
-    public ResponseEntity<Map<String, Object>>
-        getDatasets(
-            @PathVariable
-            String connectionId
-        ) {
-
-        return ResponseEntity.ok(
-            metadataService.getDatasets(
-                connectionId
-            )
-        );
+    @GetMapping("/connections/{connectionId}/datasets")
+    public ResponseEntity<Map<String, Object>> getDatasets(
+        @PathVariable String connectionId
+    ) {
+        return ResponseEntity.ok(metadataService.getDatasets(connectionId));
     }
 
-    @GetMapping(
-        "/connections/{connectionId}/datasets/{datasetId}/tables"
-    )
-    public ResponseEntity<Map<String, Object>>
-        getTables(
-            @PathVariable
-            String connectionId,
+    @GetMapping("/connections/{connectionId}/datasets/{datasetId}/tables")
+    public ResponseEntity<Map<String, Object>> getTables(
+        @PathVariable String connectionId,
+        @PathVariable String datasetId
+    ) {
+        return ResponseEntity.ok(metadataService.getTables(connectionId, datasetId));
+    }
 
-            @PathVariable
-            String datasetId
-        ) {
+    /**
+     * Compatibility aliases used by the guided Silver journey.
+     * They delegate to the same certified profiling metadata services.
+     */
+    @GetMapping("/metadata/{connectionId}/datasets")
+    public ResponseEntity<Map<String, Object>> getDatasetsAlias(
+        @PathVariable String connectionId
+    ) {
+        return ResponseEntity.ok(metadataService.getDatasets(connectionId));
+    }
 
-        return ResponseEntity.ok(
-            metadataService.getTables(
-                connectionId,
-                datasetId
-            )
-        );
+    @GetMapping("/metadata/{connectionId}/{datasetId}/tables")
+    public ResponseEntity<Map<String, Object>> getTablesAlias(
+        @PathVariable String connectionId,
+        @PathVariable String datasetId
+    ) {
+        return ResponseEntity.ok(metadataService.getTables(connectionId, datasetId));
     }
 
     @PostMapping("/execute")
-    public ResponseEntity<Map<String, Object>>
-        execute(
-            @Valid
-            @RequestBody
-            ProfilingRequest request
-        ) {
+    public ResponseEntity<Map<String, Object>> execute(
+        @Valid @RequestBody ProfilingRequest request
+    ) {
+        return ResponseEntity.ok(executionService.execute(request));
+    }
 
-        return ResponseEntity.ok(
-            executionService.execute(
-                request
-            )
-        );
+    @PostMapping("/profile")
+    public ResponseEntity<Map<String, Object>> profileAlias(
+        @Valid @RequestBody ProfilingRequest request
+    ) {
+        return ResponseEntity.ok(executionService.execute(request));
     }
 }
