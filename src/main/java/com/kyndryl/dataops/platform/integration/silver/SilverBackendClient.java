@@ -28,12 +28,16 @@ public class SilverBackendClient {
     }
 
     public Map<String, Object> get(String path) {
+        return castMap(getObject(path));
+    }
+
+    public Object getObject(String path) {
         try {
             return restClient.get()
                 .uri(path)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
-                .body(Map.class);
+                .body(Object.class);
         } catch (RestClientResponseException ex) {
             log.error("GET Silver failed. path={}, status={}, body={}", path, ex.getStatusCode(), ex.getResponseBodyAsString());
             throw ex;
@@ -41,6 +45,10 @@ public class SilverBackendClient {
     }
 
     public Map<String, Object> post(String path, Object request) {
+        return castMap(postObject(path, request));
+    }
+
+    public Object postObject(String path, Object request) {
         try {
             return restClient.post()
                 .uri(path)
@@ -48,7 +56,7 @@ public class SilverBackendClient {
                 .accept(MediaType.APPLICATION_JSON)
                 .body(request)
                 .retrieve()
-                .body(Map.class);
+                .body(Object.class);
         } catch (RestClientResponseException ex) {
             log.error("POST Silver failed. path={}, status={}, body={}", path, ex.getStatusCode(), ex.getResponseBodyAsString());
             throw ex;
@@ -68,6 +76,14 @@ public class SilverBackendClient {
             log.error("PUT Silver failed. path={}, status={}, body={}", path, ex.getStatusCode(), ex.getResponseBodyAsString());
             throw ex;
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> castMap(Object payload) {
+        if (!(payload instanceof Map<?, ?> map)) {
+            throw new IllegalStateException("El backend Silver devolvió una respuesta no compatible con objeto JSON");
+        }
+        return (Map<String, Object>) map;
     }
 
     private String normalizeBaseUrl(String value) {
