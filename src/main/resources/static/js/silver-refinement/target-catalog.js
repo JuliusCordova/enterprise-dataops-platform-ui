@@ -62,12 +62,15 @@
     return select;
   }
 
-  function appendOption(select, value, label = value, selected = false) {
+  function appendOption(select, value, label = value, selected = false, metadata = {}) {
     if (!value || [...select.options].some(option => option.value === value)) return;
     const option = document.createElement("option");
     option.value = value;
     option.textContent = label;
     option.selected = selected;
+    Object.entries(metadata).forEach(([key, item]) => {
+      if (item !== undefined && item !== null && item !== "") option.dataset[key] = String(item);
+    });
     select.appendChild(option);
   }
 
@@ -95,8 +98,25 @@
     return panel;
   }
 
+  function createLocationPanel() {
+    const panel = document.createElement("div");
+    panel.className = "silver-location-compatibility";
+    panel.dataset.status = "PENDING";
+    panel.innerHTML = `
+      <strong>Compatibilidad de ubicación</strong>
+      <span class="source-location">Fuente Bronze: pendiente</span>
+      <span class="target-location">Destino Silver: pendiente</span>
+      <span class="compatibility-result">Compatibilidad: pendiente</span>
+    `;
+    return panel;
+  }
+
   function sanitizeIdentifier(value) {
     return value.trim().replace(/[^A-Za-z0-9_]/g, "_").replace(/^_+|_+$/g, "");
+  }
+
+  function normalizeLocation(value) {
+    return String(value || "").trim().toUpperCase();
   }
 
   function projectId(projectInput) {
@@ -113,6 +133,7 @@
     const datasetInput = $("sw-target-dataset");
     const tableInput = $("sw-target-table");
     const projectInput = $("sw-target-project");
+    const sourceDatasetSelect = $("sw-dataset");
     if (!datasetInput || !tableInput || !projectInput) return;
 
     const initialDataset = datasetInput.value;
@@ -121,8 +142,50 @@
     const tableSelect = replaceInputWithSelect(tableInput, "Selecciona una tabla destino");
     const datasetPanel = createDatasetPanel();
     const tablePanel = createTablePanel();
+    const locationPanel = createLocationPanel();
     datasetSelect.closest("label")?.after(datasetPanel);
     tableSelect.closest("label")?.after(tablePanel);
+    tablePanel.after(locationPanel);
+
+    let catalogDatasets = [];
+
+    function datasetLocation(datasetId) {
+      const item = catalogDatasets.find(dataset => itemValue(dataset, ["dataset_id", "datasetId", "name"]) === datasetId);
+      return itemValue(item, ["location"]);
+    }
+
+    function selectedTargetLocation() {
+      if (datasetSelect.value === NEW_DATASET) {
+        return datasetPanel.querySelector(".new-dataset-location")?.value || "";
+      }
+      return datasetSelect.selectedOptions[0]?.dataset.location || datasetLocation(datasetSelect.value);
+    }
+
+    function renderLocationCompatibility() {
+      const sourceDataset = sourceDatasetSelect?.value || "";
+      const sourceLocation = datasetLocation(sourceDataset);
+      const targetLocation = selectedTargetLocation();
+      const sourceText = locationPanel.querySelector(".source-location");
+      const targetText = locationPanel.querySelector(".target-location");
+      const resultText = locationPanel.querySelector(".compatibility-result");
+
+      sourceText.textContent = `Fuente Bronze: ${sourceLocation || "no informada"}`;
+      targetText.textContent = `Destino Silver: ${targetLocation || "no informado"}`;
+
+      if (!sourceLocation || !targetLocation) {
+        locationPanel.dataset.status = "PENDING";
+        resultText.textContent = "Compatibilidad: pendiente de metadatos";
+        return;
+      }
+
+      if (normalizeLocation(sourceLocation) === normalizeLocation(targetLocation)) {
+        locationPanel.dataset.status = "OK";
+        resultText.textContent = "Compatibilidad: OK";
+      } else {
+        locationPanel.dataset.status = "BLOCKED";
+        resultText.textContent = "Compatibilidad: BLOQUEADA";
+      }
+    }
 
     async function loadTargetDatasets(preferredDataset = "") {
       datasetPanel.hidden = true;
@@ -132,22 +195,24 @@
       tableSelect.disabled = true;
       try {
         const payload = await api(`${catalogBase(projectInput)}/datasets`);
+        catalogDatasets = values(payload, ["datasets", "items", "data"]);
         datasetSelect.innerHTML = '<option value="">Selecciona un dataset destino</option>';
-        values(payload, ["datasets", "items", "data"]).forEach(item => {
+        catalogDatasets.forEach(item => {
           const value = itemValue(item, ["dataset_id", "datasetId", "name"]);
           const location = itemValue(item, ["location"]);
           const tableCount = itemValue(item, ["table_count", "tableCount"]);
           const suffix = [location, tableCount ? `${tableCount} tablas` : ""].filter(Boolean).join(" · ");
-          appendOption(datasetSelect, value, suffix ? `${value} — ${suffix}` : value);
+          appendOption(datasetSelect, value, suffix ? `${value} — ${suffix}` : value, false, { location });
         });
         appendOption(datasetSelect, NEW_DATASET, "+ Crear nuevo dataset");
         datasetSelect.disabled = false;
         const selected = preferredDataset || initialDataset;
         if (selected) {
-          appendOption(datasetSelect, selected, `${selected} (seleccionado)`, true);
+          appendOption(datasetSelect, selected, `${selected} (seleccionado)`, true, { location: datasetLocation(selected) });
           datasetSelect.value = selected;
           await loadTargetTables();
         }
+        renderLocationCompatibility();
       } catch (error) {
         datasetSelect.innerHTML = '<option value="">No disponible</option>';
         message(`No se pudieron cargar los datasets destino: ${error.message}`, "error");
@@ -160,6 +225,7 @@
       tableSelect.innerHTML = '<option value="">Selecciona una tabla destino</option>';
       tableSelect.disabled = true;
       const datasetId = datasetSelect.value;
+      renderLocationCompatibility();
       if (!datasetId || datasetId === NEW_DATASET) return;
       try {
         const payload = await api(`${catalogBase(projectInput)}/datasets/${encodeURIComponent(datasetId)}/tables`);
@@ -179,6 +245,8 @@
         message(`No se pudieron cargar las tablas destino: ${error.message}`, "error");
       }
     }
+
+    datasetPanel.querySelector(".new-dataset-location").addEventListener("change", renderLocationCompatibility);
 
     datasetPanel.querySelector("button").addEventListener("click", async () => {
       const button = datasetPanel.querySelector("button");
@@ -226,7 +294,17 @@
     tableSelect.addEventListener("change", () => {
       tablePanel.hidden = tableSelect.value !== NEW_TABLE;
     });
+    sourceDatasetSelect?.addEventListener("change", renderLocationCompatibility);
     projectInput.addEventListener("change", () => loadTargetDatasets());
+
+    $("sw-next")?.addEventListener("click", event => {
+      const mappingPanelVisible = document.querySelector('[data-panel="4"]:not([hidden])');
+      if (mappingPanelVisible && locationPanel.dataset.status === "BLOCKED") {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        message("La ubicación del dataset Bronze no coincide con la del dataset Silver. Selecciona un destino compatible antes de guardar el contrato.", "error");
+      }
+    }, true);
 
     await loadTargetDatasets();
   }
