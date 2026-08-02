@@ -53,8 +53,39 @@ public class SilverWorkflowClient {
         return client.post(path(workflowId, "/quality-review"), request);
     }
 
+    public Object listDestinationDatasets(String projectId) {
+        return client.getObject(catalogProjectPath(projectId) + "/datasets");
+    }
+
+    public Object createDestinationDataset(String projectId, Object request) {
+        return client.postObject(catalogProjectPath(projectId) + "/datasets", request);
+    }
+
+    public Object listDestinationTables(String projectId, String datasetId) {
+        return client.getObject(
+            catalogProjectPath(projectId)
+                + "/datasets/"
+                + validateIdentifier(datasetId, "datasetId")
+                + "/tables"
+        );
+    }
+
+    public Object getDestinationTable(String projectId, String datasetId, String tableId) {
+        return client.getObject(
+            catalogProjectPath(projectId)
+                + "/datasets/"
+                + validateIdentifier(datasetId, "datasetId")
+                + "/tables/"
+                + validateIdentifier(tableId, "tableId")
+        );
+    }
+
     private String path(String workflowId, String suffix) {
         return "/silver-workflows/" + validateIdentifier(workflowId, "workflowId") + suffix;
+    }
+
+    private String catalogProjectPath(String projectId) {
+        return "/silver-workflows/catalog/projects/" + validateIdentifier(projectId, "projectId");
     }
 
     private String validateIdentifier(String value, String fieldName) {
