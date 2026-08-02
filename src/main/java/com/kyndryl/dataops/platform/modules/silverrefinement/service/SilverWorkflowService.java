@@ -54,4 +54,20 @@ public class SilverWorkflowService {
     public Map<String, Object> reviewQuality(String workflowId, Object request) {
         return client.reviewQuality(workflowId, request);
     }
+
+    public Object listDestinationDatasets(String projectId) {
+        return client.listDestinationDatasets(projectId);
+    }
+
+    public Object createDestinationDataset(String projectId, Object request) {
+        return client.createDestinationDataset(projectId, request);
+    }
+
+    public Object listDestinationTables(String projectId, String datasetId) {
+        return client.listDestinationTables(projectId, datasetId);
+    }
+
+    public Object getDestinationTable(String projectId, String datasetId, String tableId) {
+        return client.getDestinationTable(projectId, datasetId, tableId);
+    }
 }
