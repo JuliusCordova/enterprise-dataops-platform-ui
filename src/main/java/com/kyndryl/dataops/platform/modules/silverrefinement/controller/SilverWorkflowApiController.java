@@ -33,6 +33,36 @@ public class SilverWorkflowApiController {
         return ResponseEntity.ok(service.createWorkflow(request));
     }
 
+    @GetMapping("/catalog/projects/{projectId}/datasets")
+    public ResponseEntity<Object> listDestinationDatasets(@PathVariable String projectId) {
+        return ResponseEntity.ok(service.listDestinationDatasets(projectId));
+    }
+
+    @PostMapping("/catalog/projects/{projectId}/datasets")
+    public ResponseEntity<Object> createDestinationDataset(
+        @PathVariable String projectId,
+        @RequestBody Object request
+    ) {
+        return ResponseEntity.status(201).body(service.createDestinationDataset(projectId, request));
+    }
+
+    @GetMapping("/catalog/projects/{projectId}/datasets/{datasetId}/tables")
+    public ResponseEntity<Object> listDestinationTables(
+        @PathVariable String projectId,
+        @PathVariable String datasetId
+    ) {
+        return ResponseEntity.ok(service.listDestinationTables(projectId, datasetId));
+    }
+
+    @GetMapping("/catalog/projects/{projectId}/datasets/{datasetId}/tables/{tableId}")
+    public ResponseEntity<Object> getDestinationTable(
+        @PathVariable String projectId,
+        @PathVariable String datasetId,
+        @PathVariable String tableId
+    ) {
+        return ResponseEntity.ok(service.getDestinationTable(projectId, datasetId, tableId));
+    }
+
     @GetMapping("/{workflowId}")
     public ResponseEntity<Map<String, Object>> getWorkflow(@PathVariable String workflowId) {
         return ResponseEntity.ok(service.getWorkflow(workflowId));
