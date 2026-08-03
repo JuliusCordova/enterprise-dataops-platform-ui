@@ -29,7 +29,9 @@ public class SilverOperationsApiController {
     }
 
     @GetMapping("/specs/{specId}/artifacts")
-    public ResponseEntity<Map<String, Object>> listArtifacts(@PathVariable String specId) {
+    public ResponseEntity<Object> listArtifacts(
+        @PathVariable String specId
+    ) {
         return ResponseEntity.ok(artifacts.listArtifacts(specId));
     }
 

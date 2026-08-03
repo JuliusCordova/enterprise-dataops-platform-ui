@@ -500,6 +500,46 @@ const artifactConfig={
     return String(state.execution?.status||"").toUpperCase();
   }
 
+  function renderExecutionProgress(){
+    const status=executionStatus();
+    const created=Boolean(state.execution);
+    const validated=["VALIDATED","QUEUED","SUBMITTED","RUNNING","SUCCEEDED"].includes(status);
+    const submitted=["QUEUED","SUBMITTED","RUNNING","SUCCEEDED"].includes(status);
+    const finished=status==="SUCCEEDED";
+
+    const messages={
+      "":"1 de 4 · Crea la ejecución",
+      "PENDING":"2 de 4 · Valida el paquete",
+      "VALIDATED":"3 de 4 · Listo para ejecutar en Dataproc",
+      "QUEUED":"4 de 4 · Dataproc está en cola",
+      "SUBMITTED":"4 de 4 · Enviado a Dataproc",
+      "RUNNING":"4 de 4 · Dataproc está procesando",
+      "SUCCEEDED":"Ejecución completada correctamente",
+      "FAILED":"La ejecución falló; revisa el detalle técnico"
+    };
+
+    let panel=$("sw-execution-progress");
+
+    if(!panel){
+      panel=document.createElement("div");
+      panel.id="sw-execution-progress";
+      panel.style.cssText=
+        "margin:1rem 0;padding:1rem;border:1px solid #ddd;"+
+        "border-radius:12px;background:#f7f7f7";
+      $("sw-execution-output").before(panel);
+    }
+
+    panel.innerHTML=`
+      <strong>Subpaso actual: ${messages[status]||`Estado ${status}`}</strong>
+      <div class="silver-checklist" style="margin-top:.75rem">
+        <span>${created?"✓":"→"} 1. Crear ejecución</span>
+        <span>${validated?"✓":status==="PENDING"?"→":"○"} 2. Validar paquete</span>
+        <span>${submitted?"✓":status==="VALIDATED"?"→":"○"} 3. Ejecutar Dataproc</span>
+        <span>${finished?"✓":submitted?"→":"○"} 4. Actualizar estado</span>
+      </div>
+    `;
+  }
+
   function syncJourneyButtons(){
     const status=executionStatus();
     const generate=$("sw-generate-solution");
@@ -515,29 +555,49 @@ const artifactConfig={
 
     Object.entries(artifactConfig).forEach(([type,config])=>{
       const button=$(`sw-view-${config.key}`);
-      if(button){
-        button.disabled=!state.solutionArtifacts[type];
-      }
+      if(button) button.disabled=!state.solutionArtifacts[type];
     });
 
-    $("sw-create-execution").disabled=
+    const create=$("sw-create-execution");
+    const validate=$("sw-validate-package");
+    const submit=$("sw-submit");
+    const sync=$("sw-sync");
+
+    create.disabled=
       state.busy||
       !state.solutionArtifacts.ARTIFACT_PACKAGE||
-      (
-        Boolean(state.execution)&&
-        !["FAILED","SUCCEEDED"].includes(status)
-      );
+      (Boolean(state.execution)&&!["FAILED","SUCCEEDED"].includes(status));
 
-    $("sw-validate-package").disabled=
-      state.busy||status!=="PENDING";
+    validate.disabled=state.busy||status!=="PENDING";
+    submit.disabled=state.busy||status!=="VALIDATED";
 
-    $("sw-submit").disabled=
-      state.busy||status!=="VALIDATED";
-
-    $("sw-sync").disabled=
+    sync.disabled=
       state.busy||
       !state.execution?.dataproc_batch_id||
-      !["SUBMITTED","RUNNING"].includes(status);
+      !["QUEUED","SUBMITTED","RUNNING"].includes(status);
+
+    [create,validate,submit,sync].forEach(button=>{
+      button.classList.remove("enterprise-button-primary");
+      button.classList.add("enterprise-button-secondary");
+    });
+
+    const active=
+      !state.execution?create:
+      status==="PENDING"?validate:
+      status==="VALIDATED"?submit:
+      ["QUEUED","SUBMITTED","RUNNING"].includes(status)?sync:
+      null;
+
+    if(active){
+      active.classList.remove("enterprise-button-secondary");
+      active.classList.add("enterprise-button-primary");
+    }
+
+    if(state.step===7){
+      $("sw-next").disabled=status!=="SUCCEEDED";
+    }
+
+    renderExecutionProgress();
   }
 
   async function generateSolution(){
@@ -660,9 +720,11 @@ const artifactConfig={
         }
       );
 
+      const updatedExecution=result?.execution||result;
+
       state.execution={
         ...state.execution,
-        ...result
+        ...updatedExecution
       };
 
       $("sw-execution-output").textContent=

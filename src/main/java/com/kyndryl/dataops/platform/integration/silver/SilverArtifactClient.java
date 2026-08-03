@@ -13,8 +13,10 @@ public class SilverArtifactClient {
         this.client = client;
     }
 
-    public Map<String, Object> listArtifacts(String specId) {
-        return client.get("/silver-refinement/specs/" + validate(specId) + "/artifacts");
+    public Object listArtifacts(String specId) {
+        return client.getObject(
+            "/silver-refinement/specs/" + validate(specId) + "/artifacts"
+        );
     }
 
     public Map<String, Object> generateArtifacts(String specId, Object request) {
