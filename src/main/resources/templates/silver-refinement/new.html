@@ -44,7 +44,8 @@
 </section>
 <section class="silver-panel" data-panel="4" hidden>
 <header><span class="panel-eyebrow">PASO 4 DE 7</span><h2>Define el contrato Silver</h2><p>Configura destino, mapping y transformaciones.</p></header>
-<div class="silver-form-grid"><label><span>Proyecto destino</span><input id="sw-target-project" value="proyectopersonal-480420"></label><label><span>Dataset destino</span><input id="sw-target-dataset" value="silver"></label><label><span>Tabla destino</span><input id="sw-target-table"></label><label><span>Versión del mapping</span><input id="sw-mapping-version" type="number" min="1" value="1"></label><label><span>Spec ID</span><input id="sw-spec-id" placeholder="Asignado por backend" readonly></label></div>
+<div class="silver-form-grid"><label><span>Proyecto destino</span><input id="sw-target-project" value="proyectopersonal-480420"></label><label><span>Dataset destino</span><select id="sw-target-dataset" disabled><option value="">Cargando datasets...</option></select></label><label><span>Tabla destino</span><select id="sw-target-table" disabled><option value="">Selecciona un dataset destino</option></select></label><label><span>Versión del mapping</span><input id="sw-mapping-version" type="number" min="1" value="1"></label><label><span>Spec ID</span><input id="sw-spec-id" placeholder="Asignado por backend" readonly></label></div>
+<div class="silver-selection-summary" id="target-summary"><strong>Destino pendiente</strong><span>Selecciona proyecto, dataset y tabla destino.</span></div>
 <div class="silver-mapping-header"><div><h3>Mapping de columnas</h3><p>Origen, destino, tipo y transformación.</p></div><button id="sw-add-column" class="enterprise-button enterprise-button-secondary" type="button">Agregar columna</button></div>
 <div class="dq-table-wrapper"><table class="dq-data-table"><thead><tr><th>Origen</th><th>Destino Silver</th><th>Tipo</th><th>Transformación</th><th>Nullable</th><th></th></tr></thead><tbody id="sw-mapping-body"></tbody></table></div>
 <div class="silver-action-grid" style="margin-top:1rem"><button id="sw-save-contract" class="enterprise-button enterprise-button-primary" type="button">Guardar contrato Silver</button></div>
@@ -58,8 +59,128 @@
 <pre id="sw-quality-output" class="silver-result">Revisión pendiente.</pre>
 </section>
 <section class="silver-panel" data-panel="6" hidden>
-<header><span class="panel-eyebrow">PASO 6 DE 7</span><h2>Genera artefactos versionados</h2><p>DDL y paquete PySpark se generan desde el backend.</p></header>
-<div class="silver-action-grid"><button id="sw-generate-ddl" class="enterprise-button enterprise-button-secondary">Generar DDL</button><button id="sw-generate-package" class="enterprise-button enterprise-button-primary">Generar paquete PySpark</button></div><pre id="sw-artifact-output" class="silver-result">Sin artefactos generados.</pre>
+  <header>
+    <span class="panel-eyebrow">PASO 6 DE 7</span>
+    <h2>Genera la solución PySpark</h2>
+    <p>
+      El mapping aprobado genera cuatro artefactos gobernados:
+      notebook, script ejecutable, DDL Silver y paquete de ejecución.
+    </p>
+  </header>
+
+  <div class="silver-action-grid">
+    <button id="sw-generate-solution"
+            class="enterprise-button enterprise-button-primary"
+            type="button">
+      Generar solución PySpark
+    </button>
+  </div>
+
+  <div class="dq-kpi-grid" style="margin-top:1rem">
+
+    <article>
+      <span>Notebook PySpark</span>
+      <strong id="sw-notebook-status">○ No generado</strong>
+      <p id="sw-notebook-meta">
+        silver_pipeline.ipynb · Vista revisable del procesamiento.
+      </p>
+      <button id="sw-view-notebook"
+              class="enterprise-button enterprise-button-secondary"
+              type="button"
+              disabled>
+        Ver notebook
+      </button>
+      <a id="sw-open-notebook"
+         class="enterprise-button enterprise-button-secondary"
+         target="_blank"
+         rel="noopener"
+         hidden>
+        Abrir en GCS
+      </a>
+      <pre id="sw-notebook-output"
+           class="silver-result"
+           hidden>Notebook pendiente.</pre>
+    </article>
+
+    <article>
+      <span>Script ejecutable</span>
+      <strong id="sw-script-status">○ No generado</strong>
+      <p id="sw-script-meta">
+        silver_pipeline.py · Código ejecutado por Dataproc.
+      </p>
+      <button id="sw-view-script"
+              class="enterprise-button enterprise-button-secondary"
+              type="button"
+              disabled>
+        Ver código
+      </button>
+      <a id="sw-open-script"
+         class="enterprise-button enterprise-button-secondary"
+         target="_blank"
+         rel="noopener"
+         hidden>
+        Abrir en GCS
+      </a>
+      <pre id="sw-script-output"
+           class="silver-result"
+           hidden>Script pendiente.</pre>
+    </article>
+
+    <article>
+      <span>DDL Silver</span>
+      <strong id="sw-ddl-status">○ No generado</strong>
+      <p id="sw-ddl-meta">
+        silver_ddl.sql · Estructura de la tabla destino.
+      </p>
+      <button id="sw-view-ddl"
+              class="enterprise-button enterprise-button-secondary"
+              type="button"
+              disabled>
+        Ver DDL
+      </button>
+      <a id="sw-open-ddl"
+         class="enterprise-button enterprise-button-secondary"
+         target="_blank"
+         rel="noopener"
+         hidden>
+        Abrir en GCS
+      </a>
+      <pre id="sw-ddl-output"
+           class="silver-result"
+           hidden>DDL pendiente.</pre>
+    </article>
+
+    <article>
+      <span>Paquete de ejecución</span>
+      <strong id="sw-package-status">○ No generado</strong>
+      <p id="sw-package-meta">
+        artifact-package.zip · Contiene notebook, script, DDL y manifiesto.
+      </p>
+      <button id="sw-view-package"
+              class="enterprise-button enterprise-button-secondary"
+              type="button"
+              disabled>
+        Ver manifiesto
+      </button>
+      <a id="sw-open-package"
+         class="enterprise-button enterprise-button-secondary"
+         target="_blank"
+         rel="noopener"
+         hidden>
+        Abrir en GCS
+      </a>
+      <pre id="sw-package-output"
+           class="silver-result"
+           hidden>Paquete pendiente.</pre>
+    </article>
+
+  </div>
+
+  <details style="margin-top:1rem">
+    <summary>Ver detalle técnico</summary>
+    <pre id="sw-artifact-technical-output"
+         class="silver-result">Sin generación ejecutada.</pre>
+  </details>
 </section>
 <section class="silver-panel" data-panel="7" hidden>
 <header><span class="panel-eyebrow">PASO 7 DE 7</span><h2>Valida y ejecuta en Dataproc</h2><p>Crea la ejecución, valida el paquete y sincroniza el estado.</p></header>

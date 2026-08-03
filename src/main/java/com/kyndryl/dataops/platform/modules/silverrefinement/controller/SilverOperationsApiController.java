@@ -33,6 +33,18 @@ public class SilverOperationsApiController {
         return ResponseEntity.ok(artifacts.listArtifacts(specId));
     }
 
+    @GetMapping(
+        "/specs/{specId}/artifacts/current/{artifactType}/content"
+    )
+    public ResponseEntity<Map<String, Object>> getArtifactContent(
+        @PathVariable String specId,
+        @PathVariable String artifactType
+    ) {
+        return ResponseEntity.ok(
+            artifacts.getArtifactContent(specId, artifactType)
+        );
+    }
+
     @PostMapping("/specs/{specId}/artifacts/generate")
     public ResponseEntity<Map<String, Object>> generateArtifacts(
         @PathVariable String specId,

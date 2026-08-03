@@ -31,6 +31,19 @@ public class SilverArtifactClient {
         );
     }
 
+    public Map<String, Object> getArtifactContent(
+        String specId,
+        String artifactType
+    ) {
+        return client.get(
+            "/silver-refinement/specs/"
+                + validate(specId)
+                + "/artifacts/current/"
+                + validate(artifactType)
+                + "/content"
+        );
+    }
+
     private String validate(String value) {
         if (value == null || !value.trim().matches("[A-Za-z0-9_\\-]+")) {
             throw new IllegalArgumentException("specId inválido");
