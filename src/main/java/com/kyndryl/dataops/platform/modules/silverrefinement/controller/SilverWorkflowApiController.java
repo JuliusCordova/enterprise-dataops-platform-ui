@@ -81,6 +81,16 @@ public class SilverWorkflowApiController {
         return ResponseEntity.ok(service.getBusinessRules(workflowId));
     }
 
+    @PostMapping("/{workflowId}/mapping-recommendations")
+    public ResponseEntity<Map<String, Object>> generateMappingRecommendations(
+        @PathVariable String workflowId,
+        @RequestBody Object request
+    ) {
+        return ResponseEntity.ok(
+            service.generateMappingRecommendations(workflowId, request)
+        );
+    }
+
     @PutMapping("/{workflowId}/business-rules/draft")
     public ResponseEntity<Map<String, Object>> saveBusinessRulesDraft(
         @PathVariable String workflowId,

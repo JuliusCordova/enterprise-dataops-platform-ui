@@ -33,6 +33,13 @@ public class SilverWorkflowClient {
         return client.get(path(workflowId, "/business-rules"));
     }
 
+    public Map<String, Object> generateMappingRecommendations(
+        String workflowId,
+        Object request
+    ) {
+        return client.post(path(workflowId, "/mapping-recommendations"), request);
+    }
+
     public Map<String, Object> saveBusinessRulesDraft(String workflowId, Object request) {
         return client.put(path(workflowId, "/business-rules/draft"), request);
     }

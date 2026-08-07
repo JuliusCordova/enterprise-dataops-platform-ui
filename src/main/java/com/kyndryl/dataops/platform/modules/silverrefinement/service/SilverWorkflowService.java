@@ -35,6 +35,13 @@ public class SilverWorkflowService {
         return client.getBusinessRules(workflowId);
     }
 
+    public Map<String, Object> generateMappingRecommendations(
+        String workflowId,
+        Object request
+    ) {
+        return client.generateMappingRecommendations(workflowId, request);
+    }
+
     public Map<String, Object> saveBusinessRulesDraft(String workflowId, Object request) {
         return client.saveBusinessRulesDraft(workflowId, request);
     }
