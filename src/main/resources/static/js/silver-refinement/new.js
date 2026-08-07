@@ -6,6 +6,7 @@
     tables:(c,d)=>`/ui/api/profiling/metadata/${encodeURIComponent(c)}/${encodeURIComponent(d)}/tables`,
     profile:"/ui/api/profiling/profile",
     workflows:"/ui/api/silver/workflows",
+    mappingRecommendations:id=>`/ui/api/silver/workflows/${encodeURIComponent(id)}/mapping-recommendations`,
     targetDatasets:p=>`/ui/api/silver/workflows/catalog/projects/${encodeURIComponent(p)}/datasets`,
     targetTables:(p,d)=>`/ui/api/silver/workflows/catalog/projects/${encodeURIComponent(p)}/datasets/${encodeURIComponent(d)}/tables`
   };
@@ -14,6 +15,12 @@
     step:1,
     profile:null,
     workflow:null,
+    mappingRecommendation:null,
+    loadStrategy:{type:"FULL"},
+    physicalDesign:{
+      partitioning:{enabled:false,column:null,granularity:"DAY"},
+      clustering_columns:[]
+    },
     solutionArtifacts:{},
     execution:null,
     busy:false
@@ -233,9 +240,172 @@
   function businessRules(){return [...$("sw-rules-body").querySelectorAll("tr")].map((r,i)=>{const source=r.querySelector(".rule-source").value,target=r.querySelector(".rule-target").value,name=r.querySelector(".rule-name").value.trim(),expression=r.querySelector(".rule-expression").value.trim();return{rule_id:`BR-UI-${String(i+1).padStart(3,"0")}`,name,description:name,rule_type:r.querySelector(".rule-type").value,expression,severity:r.querySelector(".rule-severity").value,enabled:true,source_columns:[source],target_columns:[target],business_owner:"Data Owner",technical_owner:"Data Engineering",rationale:$("sw-rules-reason").value.trim(),examples:[],metadata:{created_from:"silver-guided-wizard"}};}).filter(r=>r.name&&r.expression);}
   async function saveRules(){const rules=businessRules();if(!rules.length)throw new Error("Define al menos una Business Rule válida.");state.workflow=await api(`${endpoints.workflows}/${encodeURIComponent(state.workflow.workflow_id)}/business-rules/draft`,{method:"PUT",body:JSON.stringify({expected_version:state.workflow.version,rules,authored_by:$("sw-generated-by").value.trim(),change_reason:$("sw-rules-reason").value.trim()})});$("sw-rules-output").textContent=JSON.stringify(state.workflow.business_rules,null,2);$("sw-confirm-rules").disabled=false;}
   async function confirmRules(){state.workflow=await api(`${endpoints.workflows}/${encodeURIComponent(state.workflow.workflow_id)}/business-rules/confirm`,{method:"POST",body:JSON.stringify({expected_version:state.workflow.version,confirmed_by:$("sw-generated-by").value.trim(),confirmation_reason:$("sw-rules-reason").value.trim()})});$("sw-rules-output").textContent=JSON.stringify(state.workflow.business_rules,null,2);mark("check-rules",true);}
-  function addMapping(c={}){const tr=document.createElement("tr");tr.innerHTML=`<td><select class="map-source"><option value="">Sin origen</option>${state.profile.columns.map(x=>`<option value="${esc(x.name)}" ${x.name===(c.source_column||c.name)?"selected":""}>${esc(x.name)}</option>`).join("")}</select></td><td><input class="map-name" value="${esc(c.name||"")}"></td><td><input class="map-type" value="${esc(c.data_type||"STRING")}"></td><td><input class="map-transform" value="${esc(c.transformation||"")}" placeholder="TRIM(columna)"></td><td><input class="map-nullable" type="checkbox" ${c.nullable===false?"":"checked"}></td><td><button class="enterprise-button enterprise-button-secondary map-remove" type="button">×</button></td>`;tr.querySelector(".map-remove").addEventListener("click",()=>tr.remove());$("sw-mapping-body").appendChild(tr);}
-  function renderMapping(){$("sw-mapping-body").innerHTML="";state.profile.columns.forEach(c=>addMapping({name:c.name,data_type:c.data_type,source_column:c.name,nullable:c.nullable}));}
+  function addMapping(c={}){
+    const tr=document.createElement("tr");
+
+    const transformation=
+      typeof c.transformation==="object"
+        ?c.transformation?.type||"DIRECT"
+        :c.transformation||"";
+
+    const confidence=
+      c.confidence===null||c.confidence===undefined
+        ?"Manual"
+        :`${Math.round(Number(c.confidence)*100)}%`;
+
+    const risk=c.risk||"Sin riesgo informado";
+    const approval=c.requires_approval?"Requiere revisión":"No requerida";
+
+    tr.innerHTML=`
+      <td>
+        <select class="map-source">
+          <option value="">Sin origen</option>
+          ${state.profile.columns.map(x=>`
+            <option value="${esc(x.name)}"
+              ${x.name===(c.source_column||c.name)?"selected":""}>
+              ${esc(x.name)}
+            </option>`).join("")}
+        </select>
+      </td>
+      <td><input class="map-name" value="${esc(c.name||"")}"></td>
+      <td><input class="map-type" value="${esc(c.data_type||"STRING")}"></td>
+      <td>
+        <input class="map-transform"
+               value="${esc(transformation)}"
+               placeholder="DIRECT / TRIM / CAST">
+      </td>
+      <td><input class="map-nullable" type="checkbox"
+        ${c.nullable===false?"":"checked"}></td>
+      <td><strong>${esc(confidence)}</strong></td>
+      <td>${esc(risk)}</td>
+      <td>${esc(approval)}</td>
+      <td>
+        <button class="enterprise-button enterprise-button-secondary map-remove"
+                type="button">×</button>
+      </td>`;
+
+    tr.querySelector(".map-remove")
+      .addEventListener("click",()=>tr.remove());
+
+    $("sw-mapping-body").appendChild(tr);
+  }
+
+  function renderMapping(){
+    $("sw-mapping-body").innerHTML="";
+    state.profile.columns.forEach(c=>addMapping({
+      name:c.name,
+      data_type:c.data_type,
+      source_column:c.name,
+      nullable:c.nullable
+    }));
+  }
   function mappingColumns(){return [...$("sw-mapping-body").querySelectorAll("tr")].map(r=>({name:r.querySelector(".map-name").value.trim(),data_type:r.querySelector(".map-type").value.trim(),nullable:r.querySelector(".map-nullable").checked,source_column:r.querySelector(".map-source").value||null,transformation:r.querySelector(".map-transform").value.trim()||null})).filter(c=>c.name&&c.data_type&&(c.source_column||c.transformation));}
+
+  function renderStrategy(){
+    const strategy=state.loadStrategy||{type:"FULL"};
+    const design=state.physicalDesign||{};
+    const partition=design.partitioning||{};
+    const clustering=design.clustering_columns||[];
+
+    $("sw-strategy-panel").hidden=false;
+    $("sw-load-strategy").textContent=strategy.type||"FULL";
+    $("sw-watermark-column").textContent=
+      strategy.watermark_column||"No aplica";
+
+    $("sw-partition-column").textContent=
+      partition.enabled
+        ?`${partition.column||"—"} · ${partition.granularity||"DAY"}`
+        :"Sin particionamiento";
+
+    $("sw-clustering-columns").textContent=
+      clustering.length
+        ?clustering.join(", ")
+        :"Sin clustering";
+  }
+
+  async function recommendMapping(){
+    if(!state.workflow?.workflow_id){
+      throw new Error("Primero crea y confirma el workflow Silver.");
+    }
+
+    const targetProject=$("sw-target-project").value.trim();
+    const targetDataset=$("sw-target-dataset").value;
+    const targetTable=$("sw-target-table").value;
+
+    if(!targetProject||!targetDataset||!targetTable){
+      throw new Error(
+        "Selecciona proyecto, dataset y tabla destino antes de recomendar el mapping."
+      );
+    }
+
+    state.busy=true;
+    const button=$("sw-recommend-mapping");
+
+    if(button){
+      button.disabled=true;
+      button.textContent="Analizando mapping...";
+    }
+
+    try{
+      const recommendation=await api(
+        endpoints.mappingRecommendations(state.workflow.workflow_id),
+        {
+          method:"POST",
+          body:JSON.stringify({
+            expected_version:state.workflow.version,
+            target_project:targetProject,
+            target_dataset:targetDataset,
+            target_table:targetTable
+          })
+        }
+      );
+
+      state.mappingRecommendation=recommendation;
+      state.loadStrategy=recommendation.load_strategy||{type:"FULL"};
+      state.physicalDesign=recommendation.physical_design||{
+        partitioning:{enabled:false,column:null,granularity:"DAY"},
+        clustering_columns:[]
+      };
+
+      $("sw-mapping-body").innerHTML="";
+
+      (recommendation.columns||[])
+        .filter(column=>column.include!==false)
+        .forEach(column=>addMapping({
+          source_column:column.source_column,
+          name:column.target_column,
+          data_type:column.target_type,
+          nullable:column.nullable,
+          transformation:column.transformation,
+          confidence:column.confidence,
+          risk:column.risk,
+          requires_approval:column.requires_approval
+        }));
+
+      renderStrategy();
+
+      $("sw-contract-output").textContent=JSON.stringify({
+        recommendation_engine:recommendation.recommendation_engine,
+        source_workflow_version:recommendation.source_workflow_version,
+        requires_human_approval:recommendation.requires_human_approval,
+        load_strategy:state.loadStrategy,
+        physical_design:state.physicalDesign
+      },null,2);
+
+      show(
+        `Mapping recomendado. Estrategia: ${state.loadStrategy.type||"FULL"}.`,
+        "success"
+      );
+
+    }finally{
+      state.busy=false;
+
+      if(button){
+        button.disabled=false;
+        button.textContent="Recomendar mapping";
+      }
+    }
+  }
   async function saveContract(){
     const columns=mappingColumns();
     const targetProject=$("sw-target-project").value.trim();
@@ -330,6 +500,11 @@ const artifactConfig={
       target_dataset:$("sw-target-dataset").value.trim(),
       target_table:$("sw-target-table").value.trim(),
       columns:mappingColumns(),
+      load_strategy:state.loadStrategy||{type:"FULL"},
+      physical_design:state.physicalDesign||{
+        partitioning:{enabled:false,column:null,granularity:"DAY"},
+        clustering_columns:[]
+      },
       generated_by:$("sw-generated-by").value.trim(),
       source_project:state.workflow.source.project_id,
       source_dataset:state.workflow.source.dataset_id,
@@ -780,6 +955,10 @@ const artifactConfig={
   $("sw-save-rules").addEventListener("click",()=>saveRules().catch(e=>show(e.message,"error")));
   $("sw-confirm-rules").addEventListener("click",()=>confirmRules().catch(e=>show(e.message,"error")));
   $("sw-add-column").addEventListener("click",()=>addMapping());
+  $("sw-recommend-mapping").addEventListener(
+    "click",
+    ()=>recommendMapping().catch(e=>show(e.message,"error"))
+  );
   $("sw-save-contract").addEventListener("click",()=>saveContract().catch(e=>show(e.message,"error")));
   $("sw-confirm-quality").addEventListener("click",()=>confirmQuality().catch(e=>show(e.message,"error")));
 
