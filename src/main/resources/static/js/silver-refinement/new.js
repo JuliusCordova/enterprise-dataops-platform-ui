@@ -23,6 +23,8 @@
     },
     solutionArtifacts:{},
     execution:null,
+    executionMetrics:null,
+    executionLogs:null,
     busy:false
   };
   const panels=[...document.querySelectorAll("[data-panel]")];
@@ -675,6 +677,77 @@ const artifactConfig={
     return String(state.execution?.status||"").toUpperCase();
   }
 
+  function fmtTimestamp(value){
+    if(!value) return "No informado";
+
+    const date=new Date(value);
+
+    if(Number.isNaN(date.getTime())){
+      return String(value);
+    }
+
+    return date.toLocaleString("es-PE",{
+      year:"numeric",
+      month:"2-digit",
+      day:"2-digit",
+      hour:"2-digit",
+      minute:"2-digit",
+      second:"2-digit"
+    });
+  }
+
+  function booleanLabel(value){
+    if(value===true) return "Sí";
+    if(value===false) return "No";
+    return "No informado";
+  }
+
+  function renderExecutionObservability(){
+    const panel=$("sw-observability-panel");
+
+    if(!panel) return;
+
+    const execution=state.execution||{};
+    const metrics=state.executionMetrics||{};
+
+    const strategy=
+      execution.load_strategy||
+      state.loadStrategy?.type||
+      "FULL";
+
+    $("sw-obs-strategy").textContent=strategy;
+
+    $("sw-obs-watermark-column").textContent=
+      execution.watermark_column||
+      state.loadStrategy?.watermark_column||
+      "No aplica";
+
+    $("sw-obs-runtime-watermark").textContent=
+      fmtTimestamp(execution.runtime_watermark);
+
+    $("sw-obs-next-watermark").textContent=
+      fmtTimestamp(
+        metrics.next_watermark||
+        execution.next_watermark
+      );
+
+    $("sw-obs-checkpoint-version").textContent=
+      metrics.checkpoint_version??
+      "No informado";
+
+    $("sw-obs-rows").textContent=
+      `${fmt(metrics.rows_read??execution.rows_read)} / `+
+      `${fmt(metrics.rows_written??execution.rows_written)}`;
+
+    $("sw-obs-metrics-persisted").textContent=
+      booleanLabel(metrics.metrics_persisted);
+
+    $("sw-obs-checkpoint-updated").textContent=
+      booleanLabel(metrics.checkpoint_updated);
+
+    panel.hidden=!state.execution;
+  }
+
   function renderExecutionProgress(){
     const status=executionStatus();
     const created=Boolean(state.execution);
@@ -773,6 +846,22 @@ const artifactConfig={
     }
 
     renderExecutionProgress();
+    renderExecutionObservability();
+
+    const syncMetrics=$("sw-sync-metrics");
+    const loadLogs=$("sw-load-logs");
+
+    if(syncMetrics){
+      syncMetrics.disabled=
+        state.busy||
+        status!=="SUCCEEDED";
+    }
+
+    if(loadLogs){
+      loadLogs.disabled=
+        state.busy||
+        !["SUCCEEDED","FAILED","CANCELLED"].includes(status);
+    }
   }
 
   async function generateSolution(){
@@ -840,6 +929,9 @@ const artifactConfig={
     syncJourneyButtons();
 
     try{
+      state.executionMetrics=null;
+      state.executionLogs=null;
+
       state.execution=await api(
         "/ui/api/silver/executions",
         {
@@ -854,7 +946,105 @@ const artifactConfig={
       $("sw-execution-output").textContent=
         JSON.stringify(state.execution,null,2);
 
+      renderExecutionObservability();
       mark("check-execution",true);
+    }finally{
+      state.busy=false;
+      syncJourneyButtons();
+    }
+  }
+
+  async function syncExecutionMetrics(){
+    const executionId=state.execution?.execution_id;
+
+    if(!executionId){
+      throw new Error("Primero crea una ejecución.");
+    }
+
+    if(executionStatus()!=="SUCCEEDED"){
+      throw new Error(
+        "Las métricas finales se sincronizan cuando la ejecución está en SUCCEEDED."
+      );
+    }
+
+    if(state.busy) return;
+
+    state.busy=true;
+    syncJourneyButtons();
+
+    try{
+      state.executionMetrics=await api(
+        `/ui/api/silver/executions/${encodeURIComponent(executionId)}/metrics/sync`,
+        {
+          method:"POST",
+          body:"{}"
+        }
+      );
+
+      state.execution={
+        ...state.execution,
+        status:
+          state.executionMetrics.status||
+          state.execution.status,
+        rows_read:
+          state.executionMetrics.rows_read??
+          state.execution.rows_read,
+        rows_written:
+          state.executionMetrics.rows_written??
+          state.execution.rows_written,
+        next_watermark:
+          state.executionMetrics.next_watermark||
+          state.execution.next_watermark
+      };
+
+      $("sw-metrics-output").textContent=
+        JSON.stringify(state.executionMetrics,null,2);
+
+      renderExecutionObservability();
+
+      show(
+        "Métricas AgentOps sincronizadas correctamente.",
+        "success"
+      );
+
+    }finally{
+      state.busy=false;
+      syncJourneyButtons();
+    }
+  }
+
+  async function loadExecutionLogs(){
+    const executionId=state.execution?.execution_id;
+
+    if(!executionId){
+      throw new Error("Primero crea una ejecución.");
+    }
+
+    if(!["SUCCEEDED","FAILED","CANCELLED"].includes(executionStatus())){
+      throw new Error(
+        "Los logs finales estarán disponibles cuando la ejecución termine."
+      );
+    }
+
+    if(state.busy) return;
+
+    state.busy=true;
+    syncJourneyButtons();
+
+    try{
+      state.executionLogs=await api(
+        `/ui/api/silver/executions/${encodeURIComponent(executionId)}/logs`
+      );
+
+      $("sw-logs-output").textContent=
+        state.executionLogs?.content||
+        JSON.stringify(state.executionLogs,null,2);
+
+      show(
+        "Logs de ejecución cargados.",
+        "success"
+      );
+
     }finally{
       state.busy=false;
       syncJourneyButtons();
@@ -904,6 +1094,8 @@ const artifactConfig={
 
       $("sw-execution-output").textContent=
         JSON.stringify(state.execution,null,2);
+
+      renderExecutionObservability();
     }finally{
       state.busy=false;
       syncJourneyButtons();
@@ -1003,6 +1195,20 @@ const artifactConfig={
   $("sw-validate-package").addEventListener("click",()=>executionAction("validate-package").catch(e=>show(e.message,"error")));
   $("sw-submit").addEventListener("click",()=>executionAction("submit").catch(e=>show(e.message,"error")));
   $("sw-sync").addEventListener("click",()=>executionAction("sync-status").catch(e=>show(e.message,"error")));
+
+  $("sw-sync-metrics").addEventListener(
+    "click",
+    ()=>syncExecutionMetrics().catch(
+      e=>show(e.message,"error")
+    )
+  );
+
+  $("sw-load-logs").addEventListener(
+    "click",
+    ()=>loadExecutionLogs().catch(
+      e=>show(e.message,"error")
+    )
+  );
 
   setStep(1);
   syncJourneyButtons();

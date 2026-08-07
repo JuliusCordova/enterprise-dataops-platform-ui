@@ -242,8 +242,122 @@
   </details>
 </section>
 <section class="silver-panel" data-panel="7" hidden>
-<header><span class="panel-eyebrow">PASO 7 DE 7</span><h2>Valida y ejecuta en Dataproc</h2><p>Crea la ejecución, valida el paquete y sincroniza el estado.</p></header>
-<div class="silver-action-grid"><button id="sw-create-execution" class="enterprise-button enterprise-button-secondary">Crear ejecución</button><button id="sw-validate-package" class="enterprise-button enterprise-button-secondary" disabled>Validar paquete</button><button id="sw-submit" class="enterprise-button enterprise-button-primary" disabled>Ejecutar Dataproc</button><button id="sw-sync" class="enterprise-button enterprise-button-secondary" disabled>Actualizar estado</button></div><pre id="sw-execution-output" class="silver-result">Sin ejecución creada.</pre>
+<header>
+  <span class="panel-eyebrow">PASO 7 DE 7</span>
+  <h2>Valida, ejecuta y observa el pipeline</h2>
+  <p>
+    Ejecuta Dataproc y revisa watermark, checkpoint,
+    métricas y evidencia operativa.
+  </p>
+</header>
+
+<div class="silver-action-grid">
+  <button id="sw-create-execution"
+          class="enterprise-button enterprise-button-secondary">
+    Crear ejecución
+  </button>
+
+  <button id="sw-validate-package"
+          class="enterprise-button enterprise-button-secondary"
+          disabled>
+    Validar paquete
+  </button>
+
+  <button id="sw-submit"
+          class="enterprise-button enterprise-button-primary"
+          disabled>
+    Ejecutar Dataproc
+  </button>
+
+  <button id="sw-sync"
+          class="enterprise-button enterprise-button-secondary"
+          disabled>
+    Actualizar estado
+  </button>
+</div>
+
+<div id="sw-observability-panel"
+     class="dq-kpi-grid"
+     style="margin-top:1rem"
+     hidden>
+
+  <article>
+    <span>Estrategia</span>
+    <strong id="sw-obs-strategy">—</strong>
+    <p id="sw-obs-watermark-column">—</p>
+  </article>
+
+  <article>
+    <span>Runtime watermark</span>
+    <strong id="sw-obs-runtime-watermark">No informado</strong>
+    <p>Checkpoint utilizado al iniciar.</p>
+  </article>
+
+  <article>
+    <span>Next watermark</span>
+    <strong id="sw-obs-next-watermark">No informado</strong>
+    <p>Próximo punto incremental calculado.</p>
+  </article>
+
+  <article>
+    <span>Checkpoint version</span>
+    <strong id="sw-obs-checkpoint-version">No informado</strong>
+    <p>Versión persistida por AgentOps.</p>
+  </article>
+
+  <article>
+    <span>Filas leídas / escritas</span>
+    <strong id="sw-obs-rows">0 / 0</strong>
+    <p>Evidencia de procesamiento.</p>
+  </article>
+
+  <article>
+    <span>Métricas persistidas</span>
+    <strong id="sw-obs-metrics-persisted">No informado</strong>
+    <p>Resultado de persistencia AgentOps.</p>
+  </article>
+
+  <article>
+    <span>Checkpoint actualizado</span>
+    <strong id="sw-obs-checkpoint-updated">No informado</strong>
+    <p>Avance controlado del watermark.</p>
+  </article>
+</div>
+
+<div class="silver-action-grid" style="margin-top:1rem">
+  <button id="sw-sync-metrics"
+          class="enterprise-button enterprise-button-secondary"
+          type="button"
+          disabled>
+    Sincronizar métricas
+  </button>
+
+  <button id="sw-load-logs"
+          class="enterprise-button enterprise-button-secondary"
+          type="button"
+          disabled>
+    Ver logs
+  </button>
+</div>
+
+<details style="margin-top:1rem">
+  <summary>Resultado de ejecución</summary>
+  <pre id="sw-execution-output"
+       class="silver-result">Sin ejecución creada.</pre>
+</details>
+
+<details style="margin-top:1rem">
+  <summary>Métricas AgentOps</summary>
+  <pre id="sw-metrics-output"
+       class="silver-result">Métricas pendientes.</pre>
+</details>
+
+<details style="margin-top:1rem">
+  <summary>Logs operativos</summary>
+  <pre id="sw-logs-output"
+       class="silver-result">Logs pendientes.</pre>
+</details>
+
 </section>
 <footer class="silver-wizard-actions"><a class="enterprise-button enterprise-button-secondary" th:href="@{/silver-refinement}">Cancelar</a><div><button id="sw-back" class="enterprise-button enterprise-button-secondary" disabled>Anterior</button><button id="sw-next" class="enterprise-button enterprise-button-primary">Analizar fuente</button></div></footer>
 </article>
