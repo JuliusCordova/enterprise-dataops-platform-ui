@@ -94,6 +94,211 @@
     select.disabled=items.length===0;
   }
 
+  const targetResourcePattern=/^[A-Za-z_][A-Za-z0-9_]{0,1023}$/;
+
+  function targetTableMode(){
+    return $("sw-target-mode")?.value||"EXISTING";
+  }
+
+  function targetTableValue(){
+    if(targetTableMode()==="NEW"){
+      return $("sw-target-table-new")?.value.trim()||"";
+    }
+
+    return $("sw-target-table")?.value.trim()||"";
+  }
+
+  function targetTableExists(table){
+    return [...$("sw-target-table").options]
+      .some(option=>option.value===table);
+  }
+
+  function validatedTargetTable(){
+    const table=targetTableValue();
+
+    if(!table){
+      throw new Error(
+        targetTableMode()==="NEW"
+          ?"Ingresa el nombre de la nueva tabla Silver."
+          :"Selecciona una tabla Silver existente."
+      );
+    }
+
+    if(!targetResourcePattern.test(table)){
+      throw new Error(
+        "El nombre de tabla debe iniciar con letra o '_' y contener solo letras, números o '_'."
+      );
+    }
+
+    if(targetTableMode()==="NEW"&&targetTableExists(table)){
+      throw new Error(
+        `La tabla ${table} ya existe. Usa el modo "Tabla existente".`
+      );
+    }
+
+    return table;
+  }
+
+  function currentTargetKey(){
+    const project=$("sw-target-project").value.trim();
+    const dataset=$("sw-target-dataset").value.trim();
+    const table=targetTableValue();
+
+    return project&&dataset&&table
+      ?`${project}.${dataset}.${table}`
+      :"";
+  }
+
+  function persistedTargetKey(){
+    const target=state.workflow?.silver_target;
+
+    if(!target) return "";
+
+    const project=target.project_id||"";
+    const dataset=target.dataset_id||"";
+    const table=target.table_id||"";
+
+    return project&&dataset&&table
+      ?`${project}.${dataset}.${table}`
+      :"";
+  }
+
+  function ensureTargetMatchesPersistedContract(){
+    const current=currentTargetKey();
+    const persisted=persistedTargetKey();
+
+    if(!state.workflow?.spec_id||!persisted){
+      throw new Error("Guarda el contrato Silver antes de continuar.");
+    }
+
+    if(current!==persisted){
+      throw new Error(
+        "El destino cambió después de guardar el contrato. "+
+        "Guarda nuevamente el contrato Silver antes de continuar."
+      );
+    }
+
+    return current;
+  }
+
+  function clearTargetDependentRuntime(){
+    state.solutionArtifacts={};
+    state.execution=null;
+    state.executionMetrics=null;
+    state.executionLogs=null;
+
+    ["notebook","script","ddl","package"].forEach(key=>{
+      const status=$(`sw-${key}-status`);
+      const meta=$(`sw-${key}-meta`);
+      const view=$(`sw-view-${key}`);
+      const link=$(`sw-open-${key}`);
+      const output=$(`sw-${key}-output`);
+
+      if(status){
+        status.textContent="○ No generado";
+      }
+
+      if(meta){
+        meta.textContent=
+          "Pendiente de regeneración para el destino actual.";
+      }
+
+      if(view){
+        view.disabled=true;
+      }
+
+      if(link){
+        link.hidden=true;
+      }
+
+      if(output){
+        output.hidden=true;
+      }
+    });
+
+    const executionOutput=$("sw-execution-output");
+    const metricsOutput=$("sw-metrics-output");
+    const logsOutput=$("sw-logs-output");
+    const observability=$("sw-observability-panel");
+
+    if(executionOutput){
+      executionOutput.textContent="Sin ejecución creada.";
+    }
+
+    if(metricsOutput){
+      metricsOutput.textContent="Métricas pendientes.";
+    }
+
+    if(logsOutput){
+      logsOutput.textContent="Logs pendientes.";
+    }
+
+    if(observability){
+      observability.hidden=true;
+    }
+
+    [
+      "sw-create-execution",
+      "sw-validate-package",
+      "sw-submit",
+      "sw-sync",
+      "sw-sync-metrics",
+      "sw-load-logs"
+    ].forEach(id=>{
+      const button=$(id);
+
+      if(button){
+        button.disabled=true;
+      }
+    });
+  }
+
+  function invalidateTargetRecommendation(){
+    clearTargetDependentRuntime();
+    state.mappingRecommendation=null;
+    state.loadStrategy={type:"FULL"};
+    state.physicalDesign={
+      partitioning:{
+        enabled:false,
+        column:null,
+        granularity:"DAY"
+      },
+      clustering_columns:[]
+    };
+
+    const strategyPanel=$("sw-strategy-panel");
+
+    if(strategyPanel){
+      strategyPanel.hidden=true;
+    }
+
+    if(state.workflow?.spec_id&&persistedTargetKey()){
+      mark(
+        "check-contract",
+        currentTargetKey()===persistedTargetKey()
+      );
+    }
+  }
+
+  function syncTargetTableMode({suggestSource=false}={}){
+    const isNew=targetTableMode()==="NEW";
+
+    $("sw-target-existing-wrap").hidden=isNew;
+    $("sw-target-new-wrap").hidden=!isNew;
+
+    if(
+      isNew&&
+      suggestSource&&
+      !$("sw-target-table-new").value.trim()
+    ){
+      $("sw-target-table-new").value=
+        $("sw-table").value.trim();
+    }
+
+    invalidateTargetRecommendation();
+    updateTargetSummary();
+  }
+
   function targetLocationStatus(){
     const source=(
       $("sw-dataset").selectedOptions[0]?.dataset.location||
@@ -128,7 +333,8 @@
 
     const project=$("sw-target-project").value.trim();
     const dataset=$("sw-target-dataset").value;
-    const table=$("sw-target-table").value;
+    const table=targetTableValue();
+    const mode=targetTableMode();
     const location=targetLocationStatus();
 
     if(!project||!dataset||!table){
@@ -147,9 +353,14 @@
         `Ubicación incompatible: fuente ${location.source} / destino ${location.target}.`;
     }
 
+    const modeText=
+      mode==="NEW"
+        ?"Nueva tabla Silver · no creada físicamente"
+        :"Tabla Silver existente";
+
     summary.innerHTML=
       `<strong>${esc(project)}.${esc(dataset)}.${esc(table)}</strong>`+
-      `<span>${esc(locationText)}</span>`;
+      `<span>${esc(modeText)} · ${esc(locationText)}</span>`;
   }
 
   async function loadTargetDatasets(){
@@ -230,6 +441,14 @@
     ].find(value=>value&&available.has(value));
 
     if(preferred) tableSelect.value=preferred;
+
+    if(
+      targetTableMode()==="NEW"&&
+      !$("sw-target-table-new").value.trim()&&
+      suggestedSource
+    ){
+      $("sw-target-table-new").value=suggestedSource;
+    }
 
     updateTargetSummary();
   }
@@ -332,7 +551,7 @@
 
     const targetProject=$("sw-target-project").value.trim();
     const targetDataset=$("sw-target-dataset").value;
-    const targetTable=$("sw-target-table").value;
+    const targetTable=validatedTargetTable();
 
     if(!targetProject||!targetDataset||!targetTable){
       throw new Error(
@@ -412,7 +631,7 @@
     const columns=mappingColumns();
     const targetProject=$("sw-target-project").value.trim();
     const targetDataset=$("sw-target-dataset").value;
-    const targetTable=$("sw-target-table").value;
+    const targetTable=validatedTargetTable();
 
     if(!columns.length){
       throw new Error("Define al menos una columna Silver.");
@@ -496,11 +715,14 @@ const artifactConfig={
   };
 
   function artifactRequest(){
+    ensureTargetMatchesPersistedContract();
+    const targetTable=validatedTargetTable();
+
     return {
       mapping_version:Number($("sw-mapping-version").value),
       target_project:$("sw-target-project").value.trim(),
       target_dataset:$("sw-target-dataset").value.trim(),
-      target_table:$("sw-target-table").value.trim(),
+      target_table:targetTable,
       columns:mappingColumns(),
       load_strategy:state.loadStrategy||{type:"FULL"},
       physical_design:state.physicalDesign||{
@@ -1102,7 +1324,7 @@ const artifactConfig={
     }
   }
 
-  async function next(){try{hide();if(state.step===1){if(!$("sw-connection").value||!$("sw-dataset").value||!$("sw-table").value)throw new Error("Selecciona conexión, dataset y tabla.");setStep(2);await runProfile();return;}if(state.step===2){if(!state.profile?.columns?.length)throw new Error("El profiling debe devolver columnas.");await createAndConfirmWorkflow();setStep(3);return;}if(state.step===3){if(state.workflow.active_step!==4)throw new Error("Guarda y confirma las Business Rules antes de continuar.");setStep(4);return;}if(state.step===4){if(!state.workflow.spec_id)throw new Error("Guarda el contrato Silver antes de continuar.");setStep(5);return;}if(state.step===5){if(state.workflow.active_step<6)throw new Error("Confirma la revisión de calidad antes de continuar.");setStep(6);return;}if(state.step===6){if(!allArtifactsReady())throw new Error("Genera los cuatro artefactos antes de continuar.");setStep(7);syncJourneyButtons();return;}if(state.step===7){if(executionStatus()!=="SUCCEEDED")throw new Error(`La ejecución debe finalizar en SUCCEEDED; estado actual=${executionStatus()||"NO CREADA"}.`);window.location.href=`/silver-refinement/${encodeURIComponent(state.workflow.workflow_id)}`;}}catch(e){show(e.message,"error");}}
+  async function next(){try{hide();if(state.step===1){if(!$("sw-connection").value||!$("sw-dataset").value||!$("sw-table").value)throw new Error("Selecciona conexión, dataset y tabla.");setStep(2);await runProfile();return;}if(state.step===2){if(!state.profile?.columns?.length)throw new Error("El profiling debe devolver columnas.");await createAndConfirmWorkflow();setStep(3);return;}if(state.step===3){if(state.workflow.active_step!==4)throw new Error("Guarda y confirma las Business Rules antes de continuar.");setStep(4);return;}if(state.step===4){if(!state.workflow.spec_id)throw new Error("Guarda el contrato Silver antes de continuar.");ensureTargetMatchesPersistedContract();setStep(5);return;}if(state.step===5){if(state.workflow.active_step<6)throw new Error("Confirma la revisión de calidad antes de continuar.");setStep(6);return;}if(state.step===6){if(!allArtifactsReady())throw new Error("Genera los cuatro artefactos antes de continuar.");setStep(7);syncJourneyButtons();return;}if(state.step===7){if(executionStatus()!=="SUCCEEDED")throw new Error(`La ejecución debe finalizar en SUCCEEDED; estado actual=${executionStatus()||"NO CREADA"}.`);window.location.href=`/silver-refinement/${encodeURIComponent(state.workflow.workflow_id)}`;}}catch(e){show(e.message,"error");}}
   $("sw-connection").addEventListener("change",async()=>{
     try{
       await loadDatasets();
@@ -1125,6 +1347,14 @@ const artifactConfig={
 
   $("sw-table").addEventListener("change",async()=>{
     updateSourceSummary();
+
+    if(targetTableMode()==="NEW"){
+      $("sw-target-table-new").value=
+        $("sw-table").value.trim();
+    }
+
+    invalidateTargetRecommendation();
+
     try{
       await loadTargetTables();
     }catch(e){
@@ -1133,14 +1363,28 @@ const artifactConfig={
   });
 
   $("sw-target-project").addEventListener("change",()=>{
+    invalidateTargetRecommendation();
     loadTargetDatasets().catch(e=>show(e.message,"error"));
   });
 
   $("sw-target-dataset").addEventListener("change",()=>{
+    invalidateTargetRecommendation();
     loadTargetTables().catch(e=>show(e.message,"error"));
   });
 
-  $("sw-target-table").addEventListener("change",updateTargetSummary);
+  $("sw-target-mode").addEventListener("change",()=>{
+    syncTargetTableMode({suggestSource:true});
+  });
+
+  $("sw-target-table").addEventListener("change",()=>{
+    invalidateTargetRecommendation();
+    updateTargetSummary();
+  });
+
+  $("sw-target-table-new").addEventListener("input",()=>{
+    invalidateTargetRecommendation();
+    updateTargetSummary();
+  });
   $("sw-next").addEventListener("click",next);
   $("sw-back").addEventListener("click",()=>setStep(Math.max(1,state.step-1)));
   $("sw-add-rule").addEventListener("click",()=>addRule());
@@ -1212,6 +1456,7 @@ const artifactConfig={
 
   setStep(1);
   syncJourneyButtons();
+  syncTargetTableMode({suggestSource:true});
   loadConnections();
   loadTargetDatasets().catch(e=>show(e.message,"error"));
 })();
