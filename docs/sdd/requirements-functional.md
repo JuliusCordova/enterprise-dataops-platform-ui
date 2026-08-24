@@ -17,6 +17,50 @@
 | RF-COM-008 | El sistema debe permitir desactivar/reactivar sin eliminar historial. | P0 |
 | RF-COM-009 | El archivado debe ser lógico y no eliminar evidencia histórica. | P0 |
 | RF-COM-010 | El BFF debe mostrar errores reales de backend y no simular éxito con datos locales. | P0 |
+| RF-COM-011 | `Guardar borrador`, `Validar` y `Publicar` deben ser operaciones funcionalmente separadas y trazables. | P0 |
+| RF-COM-012 | Una validación satisfactoria solo aplica al payload/versión validado; si cambia la configuración debe repetirse o invalidarse la validación. | P0 |
+| RF-COM-013 | Una configuración publicada y `ACTIVE` debe quedar disponible en el catálogo de ejecución del mismo dominio. | P0 |
+
+## 1.1 Flujos funcionales de referencia
+
+### Perfilamiento y Calidad
+
+```mermaid
+flowchart LR
+    A["Hub"] --> B["Seleccionar tabla"]
+    B --> C["Perfilar"]
+    C --> D["Informe y hallazgos"]
+    D --> E["Crear/ajustar reglas"]
+    E --> F["Guardar draft"]
+    F --> G["Validar"]
+    G --> H{"VALID"}
+    H -- "No" --> E
+    H -- "Sí" --> I["Publicar"]
+    I --> J["Catálogo Quality Execution"]
+    J --> K["Ejecutar"]
+    K --> L["Resultados/issues"]
+```
+
+### Reconciliación / Cuadratura
+
+```mermaid
+flowchart LR
+    A["Catálogo de cuadraturas"] --> B{"Existente o nueva"}
+    B -- "Existente" --> C["Seleccionar ACTIVE"]
+    C --> D["Ejecutar cuadratura"]
+    B -- "Nueva" --> E["Origen y destino"]
+    E --> F["Analizar metadata"]
+    F --> G["Claves + fecha + COUNT/SUM"]
+    G --> H["Reglas/tolerancias"]
+    H --> I["Guardar draft"]
+    I --> J["Validar"]
+    J --> K{"VALID"}
+    K -- "No" --> H
+    K -- "Sí" --> L["Publicar"]
+    L --> A
+```
+
+La descripción detallada y catalogación de capturas se mantiene en [`ui-journey-evidence.md`](ui-journey-evidence.md).
 
 ## 2. Perfilamiento y calidad
 
@@ -38,6 +82,23 @@
 | RF-DQ-014 | Consultar resultado por `execution_id` y último resultado por configuración. | P0 | IMPLEMENTED |
 | RF-DQ-015 | Consultar issues/incumplimientos por regla, columna y severidad. | P1 | PARTIAL / TO_VALIDATE |
 | RF-DQ-016 | Comparar calidad actual contra baseline/perfil histórico. | P1 | GAP |
+| RF-DQ-017 | Desde el informe de perfilado, el usuario debe poder iniciar `Crear reglas recomendadas` conservando fuente, tabla, columnas y referencia/contexto del perfil que originó las recomendaciones. | P0 | IMPLEMENTED/PARTIAL; trazabilidad TO_VALIDATE |
+| RF-DQ-018 | El informe debe mostrar métricas/hallazgos útiles para decisión —incluyendo completitud, cardinalidad, posibles claves y observaciones— basados en respuesta real del backend. | P0 | IMPLEMENTED/PARTIAL; cálculo derivado TO_VALIDATE |
+| RF-DQ-019 | El usuario debe poder activar/desactivar recomendaciones, agregar reglas manuales y editar tipo, columna, nombre, dimensión y umbrales antes de guardar el draft. | P0 | IMPLEMENTED/PARTIAL UX |
+| RF-DQ-020 | La UI debe impedir `Confirmar y publicar` hasta que la configuración actual tenga validación backend satisfactoria. | P0 | IMPLEMENTED visual / backend branch |
+| RF-DQ-021 | Después de publicar, la configuración debe aparecer en el catálogo de Quality Execution como `ACTIVE` y ser seleccionable para ejecución. | P0 | IMPLEMENTED visual / release exacto TO_VALIDATE |
+| RF-DQ-022 | La preparación de ejecución debe permitir `business_date` opcional, modo de ejecución y `requested_by`, según contrato. | P0 | IMPLEMENTED/PARTIAL |
+| RF-DQ-023 | Si el frontend pierde el resultado/contexto de perfilado requerido para continuar, debe recuperar estado o exigir un nuevo perfilado explícito; no debe crear/publicar reglas con contexto incompleto. | P0 | PARTIAL / evidencia visual de recuperación |
+
+### 2.1 Trazabilidad UI → RF
+
+| Paso UX | Evidencia visual | RF principales |
+|---|---|---|
+| 1. Hub principal | `UI-DQ-01` | RF-COM-001 |
+| 2. Seleccionar tabla y perfilar | `UI-DQ-02`, `UI-DQ-03`, `UI-DQ-04` | RF-DQ-001..005, RF-DQ-018 |
+| 3. Crear reglas y validar | `UI-DQ-05`, `UI-DQ-06` | RF-DQ-006..009, RF-DQ-017, RF-DQ-019, RF-COM-011..012 |
+| 4. Confirmar y publicar | `UI-DQ-07` | RF-DQ-010, RF-DQ-020, RF-COM-004..005 |
+| 5. Ejecutar reglas | `UI-DQ-08` | RF-DQ-012..015, RF-DQ-021..022, RF-COM-006, RF-COM-013 |
 
 ## 3. Reconciliación / cuadratura
 
@@ -57,6 +118,25 @@
 | RF-REC-012 | Mostrar conteos, agregados, diferencias, tolerancias y estado calculado por backend. | P0 | IMPLEMENTED/PARTIAL runtime |
 | RF-REC-013 | Relacionar cada ejecución con la versión canónica exacta de configuración utilizada. | P0 | PARTIAL |
 | RF-REC-014 | Permitir consulta en lenguaje natural (`ask`) solo sobre catálogo/configuraciones autorizadas. | P2 | IMPLEMENTED backend operativo / TO_VALIDATE |
+| RF-REC-015 | El catálogo de reconciliación debe ofrecer dos rutas explícitas: seleccionar una configuración `ACTIVE` para ejecutar o iniciar `+ Nueva cuadratura`. | P0 | IMPLEMENTED / evidencia visual |
+| RF-REC-016 | El wizard de nueva cuadratura debe preservar estado entre `Origen y destino → Análisis → Reglas → Confirmación`. | P0 | IMPLEMENTED/PARTIAL; E2E TO_VALIDATE |
+| RF-REC-017 | El análisis debe identificar columnas compatibles entre origen y destino y exponer tipo/compatibilidad antes de validar/publicar. | P0 | IMPLEMENTED visual / backend TO_VALIDATE |
+| RF-REC-018 | Gemini puede recomendar claves, columna de fecha y métricas `COUNT`/`SUM`, pero el usuario debe poder incluir/excluir recomendaciones antes de guardar. | P1 | IMPLEMENTED/PARTIAL |
+| RF-REC-019 | El paso de reglas debe permitir definir umbrales/tolerancias y reglas de matching que se reflejen en la confirmación final. | P0 | IMPLEMENTED/PARTIAL; captura dedicada pendiente |
+| RF-REC-020 | La confirmación debe mostrar resumen de proceso, dominio, origen, destino, claves, fecha, métricas, umbrales/tolerancias y responsable antes de publicar. | P0 | IMPLEMENTED / evidencia visual |
+| RF-REC-021 | La UI debe separar `Guardar borrador`, `Validar configuración` y `Confirmar y publicar`. | P0 | IMPLEMENTED / evidencia visual |
+| RF-REC-022 | Después de publicar, la reconciliación debe regresar/estar disponible en el catálogo como `ACTIVE` y ejecutable. | P0 | IMPLEMENTED backend; E2E TO_VALIDATE |
+| RF-REC-023 | La preparación on-demand debe registrar al menos configuración, `business_date` y `requested_by` antes de ejecutar. | P0 | IMPLEMENTED/PARTIAL |
+
+### 3.1 Trazabilidad UI → RF
+
+| Paso UX | Evidencia visual | RF principales |
+|---|---|---|
+| 1. Catálogo: ejecutar existente o crear nueva | `UI-REC-01` | RF-REC-008..009, RF-REC-015, RF-REC-023 |
+| 2. Origen y destino | `UI-REC-02` | RF-REC-001..002, RF-REC-005, RF-REC-016 |
+| 3. Análisis y métricas | `UI-REC-03`, `UI-REC-04` | RF-REC-003..004, RF-REC-017..019 |
+| 4. Confirmación/publicación | `UI-REC-05` | RF-REC-006..007, RF-REC-020..022, RF-COM-011..012 |
+| 5. Ejecución | `UI-REC-01` | RF-REC-009, RF-REC-011..013, RF-REC-023, RF-COM-006 |
 
 ## 4. Scheduling común
 
@@ -80,4 +160,5 @@ Un RF cambia a `IMPLEMENTED` solo cuando existe:
 3. código versionado en el repositorio propietario;
 4. prueba automatizada apropiada;
 5. evidencia de integración/runtime cuando aplique;
-6. referencia de release/commit.
+6. referencia de release/commit;
+7. evidencia visual actualizada cuando el RF modifica el journey de usuario.
