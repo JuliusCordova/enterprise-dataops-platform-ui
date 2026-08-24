@@ -3,7 +3,10 @@
 **Estado:** REVIEWED  
 **Dominio:** Reconciliation  
 **Frontend/BFF:** `enterprise-dataops-platform-ui`  
+**Frontend actual:** [Enterprise DataOps Platform — Cloud Run](https://enterprise-dataops-platform-ui-mkqutd4koq-uc.a.run.app)  
 **Backend ejecutable:** `JuliusCordova/intercorp-fest-agent`
+
+> El frontend indicado es la referencia funcional/visual actual. La revisión desplegada aún debe certificarse contra SHA de GitHub e image digest.
 
 ## 1. Problema
 
