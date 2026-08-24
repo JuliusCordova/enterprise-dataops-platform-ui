@@ -1,6 +1,8 @@
 # Arquitectura del producto Enterprise DataOps Platform
 
-Este directorio es la fuente de verdad documental del producto. Toda decisión arquitectónica, contrato API, matriz de rutas, plan de implementación, evidencia de certificación y criterio de aceptación debe quedar registrada aquí.
+Este directorio conserva las decisiones arquitectónicas, contratos API, matrices de rutas, planes de implementación y evidencia técnica del producto.
+
+La definición funcional SDD de **Perfilamiento/Calidad** y **Reconciliación/Cuadratura** se encuentra en [`../sdd/README.md`](../sdd/README.md) y debe leerse como fuente de verdad funcional complementaria a esta arquitectura.
 
 ## Principios de gobierno documental
 
@@ -9,8 +11,17 @@ Este directorio es la fuente de verdad documental del producto. Toda decisión a
 3. Ningún endpoint se considera aprobado sin método, ruta, DTO, evidencia y backend propietario.
 4. No se simulan en frontend capacidades inexistentes en backend.
 5. Las decisiones relevantes se formalizan mediante ADR o especificación versionada.
+6. Todo requisito P0 debe tener trazabilidad SPEC → RF/RNF → contrato → código → prueba → evidencia → release.
 
 ## Documentos canónicos
+
+### SDD funcional
+- [Índice SDD Quality & Reconciliation](../sdd/README.md)
+- [SPEC-001 — Data Profiling & Quality Lifecycle](../sdd/SPEC-001-data-quality-lifecycle.md)
+- [SPEC-002 — Reconciliation Lifecycle](../sdd/SPEC-002-reconciliation-lifecycle.md)
+- [Requerimientos funcionales](../sdd/requirements-functional.md)
+- [Requerimientos no funcionales](../sdd/requirements-non-functional.md)
+- [Trazabilidad y baseline de código](../sdd/traceability-code-baseline.md)
 
 ### Límites y routing
 - [Backend routing matrix](backend-routing-matrix.md)
@@ -31,13 +42,19 @@ Este directorio es la fuente de verdad documental del producto. Toda decisión a
 
 ```text
 docs/
+├── sdd/
+│   ├── README.md
+│   ├── SPEC-001-data-quality-lifecycle.md
+│   ├── SPEC-002-reconciliation-lifecycle.md
+│   ├── requirements-functional.md
+│   ├── requirements-non-functional.md
+│   └── traceability-code-baseline.md
 ├── architecture/
 │   ├── README.md
 │   ├── adr-*.md
 │   ├── api-contracts/
 │   ├── implementation-plans/
 │   └── sprint-evidence/
-├── functional/
 ├── operations/
 └── releases/
 ```
@@ -54,7 +71,9 @@ docs/
 
 Todo cambio funcional o técnico que modifique contratos, responsabilidades o comportamiento del producto debe actualizar en el mismo PR:
 
+- SPEC/RF/RNF afectados;
 - código afectado;
-- documento canónico correspondiente;
+- documento arquitectónico correspondiente;
 - criterio de aceptación;
-- evidencia de validación.
+- evidencia de validación;
+- referencia de release/commit cuando aplique.
