@@ -19,6 +19,8 @@ El producto se organiza en dos journeys gobernados, expuestos desde un único fr
 2. **Reconciliation Journey**  
    Seleccionar origen y destino → definir claves, métricas, filtros y tolerancias → validar → publicar/versionar → ejecutar on-demand o programado → revisar diferencias y evidencia.
 
+La vista arquitectónica AS-IS de la demo está documentada en [`../architecture/demo-as-is.md`](../architecture/demo-as-is.md).
+
 ## 2. Principio de ownership
 
 ### Este repositorio (`enterprise-dataops-platform-ui`)
@@ -60,6 +62,7 @@ Es un producto/backend separado para Bronze → Silver, transformación, mapeo, 
 - [`requirements-non-functional.md`](requirements-non-functional.md)
 - [`ui-journey-evidence.md`](ui-journey-evidence.md) — catálogo de las capturas UX validadas y flujos Mermaid.
 - [`traceability-code-baseline.md`](traceability-code-baseline.md)
+- [`../architecture/demo-as-is.md`](../architecture/demo-as-is.md) — arquitectura actual de la demo, componentes, ownership, Mermaid y gaps.
 
 ## 4. Regla SDD
 
@@ -70,6 +73,8 @@ Todo incremento debe seguir:
 Un requisito no se considera implementado solamente porque exista una pantalla o un endpoint. Debe tener trazabilidad hacia código ejecutable y evidencia de validación.
 
 Toda modificación relevante del journey debe actualizar también la evidencia visual y el Mermaid asociado para evitar divergencia entre UX, SPEC y código.
+
+Toda modificación que cambie ownership, componentes, contratos o persistencia debe actualizar también la arquitectura AS-IS/TO-BE correspondiente.
 
 ## 5. Estados de cobertura
 
@@ -84,6 +89,7 @@ A la fecha de este baseline:
 
 - el frontend/BFF base está versionado en `main`;
 - el frontend actual de referencia funcional está disponible en `https://enterprise-dataops-platform-ui-mkqutd4koq-uc.a.run.app`;
+- la arquitectura AS-IS de la demo queda documentada en `docs/architecture/demo-as-is.md`;
 - la evolución V2 y documentación arquitectónica están en `architecture/backend-routing-matrix`, 20 commits por delante de `main`;
 - el backend Quality/Reconciliation está versionado en `intercorp-fest-agent`, rama `feature/data-quality-engine`, 6 commits por delante de `main`;
 - perfilamiento actual de BigQuery está implementado;
