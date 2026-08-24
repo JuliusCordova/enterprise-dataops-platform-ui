@@ -2,7 +2,10 @@
 
 **Estado:** REVIEWED  
 **Fecha de validación visual:** 2026-08-24  
+**Frontend actual de referencia:** [Enterprise DataOps Platform — Cloud Run](https://enterprise-dataops-platform-ui-mkqutd4koq-uc.a.run.app)  
 **Fuente:** capturas de la aplicación Enterprise DataOps proporcionadas y recorridas con el usuario durante la sesión de definición SDD.
+
+> Las capturas documentan el comportamiento funcional/visual observado en el frontend actual de referencia. La correspondencia exacta entre esa revisión Cloud Run y un SHA/image digest de GitHub continúa pendiente de certificación de release.
 
 ## 1. Propósito
 
