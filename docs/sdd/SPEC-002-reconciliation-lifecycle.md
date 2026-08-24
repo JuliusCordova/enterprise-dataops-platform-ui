@@ -13,12 +13,59 @@ Los equipos necesitan comprobar rápidamente que los datos de un origen y un des
 
 Permitir el ciclo:
 
-`Seleccionar origen/destino → Definir comparación → Validar → Publicar/versionar → Ejecutar → Analizar diferencias`
+`Seleccionar cuadratura existente o crear nueva → Definir origen/destino → Analizar metadata y métricas → Definir reglas/tolerancias → Validar → Publicar/versionar → Ejecutar → Analizar diferencias`
 
 La ejecución deberá soportar:
 
 - `ON_DEMAND`;
 - `SCHEDULED`.
+
+## 2.1 Journey UX validado
+
+Las capturas revisadas el 2026-08-24 consolidan dos rutas de entrada y cinco macroetapas:
+
+1. **Seleccionar cuadratura o crear una nueva** desde el catálogo.
+2. **Definir origen y destino** mediante wizard guiado.
+3. **Analizar tablas y seleccionar métricas** con recomendaciones de Gemini bajo control del usuario.
+4. **Confirmar y publicar** una configuración validada/versionada.
+5. **Ejecutar la cuadratura** desde el catálogo sobre una configuración `ACTIVE`.
+
+La evidencia visual está catalogada en [`ui-journey-evidence.md`](ui-journey-evidence.md), referencias `UI-REC-01` a `UI-REC-05`.
+
+### Flujo Mermaid normativo
+
+```mermaid
+flowchart LR
+    A["1. Catálogo de cuadraturas"] --> B{"¿Ejecutar existente o crear nueva?"}
+
+    B -- "Existente" --> C["Seleccionar configuración ACTIVE"]
+    C --> D["Fecha de negocio + solicitado por"]
+    D --> E["5. Ejecutar cuadratura"]
+    E --> F["Resultado y diferencias"]
+
+    B -- "Nueva" --> G["+ Nueva cuadratura"]
+    G --> H["2. Paso 1: proceso, origen y destino"]
+    H --> I["3. Paso 2: analizar metadata compatible"]
+    I --> J["Seleccionar claves, fecha, COUNT y SUM"]
+    J --> K["Paso 3: reglas, umbrales y tolerancias"]
+    K --> L["4. Paso 4: confirmación"]
+    L --> M["Guardar borrador"]
+    M --> N["Validar configuración"]
+    N --> O{"¿VALID?"}
+    O -- "No" --> K
+    O -- "Sí" --> P["Confirmar y publicar"]
+    P --> Q["Configuración ACTIVE / versión PUBLISHED"]
+    Q --> A
+```
+
+### Principios de interacción derivados de la evidencia
+
+- El catálogo es el punto de entrada tanto para ejecución on-demand como para creación de una nueva cuadratura.
+- Crear una nueva cuadratura debe resolverse mediante un wizard que preserve estado entre pasos.
+- Gemini puede recomendar columnas, claves y métricas, pero el usuario mantiene la decisión final.
+- La compatibilidad de metadata origen ↔ destino es un gate previo al diseño/publicación.
+- `Guardar borrador`, `Validar configuración` y `Confirmar y publicar` son acciones separadas y auditables.
+- Una cuadratura publicada debe volver al catálogo como configuración `ACTIVE` y ejecutable.
 
 ## 3. Selección de activos
 
@@ -31,6 +78,8 @@ El usuario debe poder navegar metadata de conexiones y seleccionar para ambos la
 - columnas.
 
 El BFF no inventa metadata y no permite publicar referencias inexistentes.
+
+Para cada lado la UX podrá ofrecer un filtro opcional gobernado, por ejemplo asociado a `business_date`, siempre que el backend valide su seguridad y compatibilidad.
 
 ## 4. Definición de cuadratura
 
@@ -50,6 +99,17 @@ Una configuración debe permitir como mínimo:
 - reglas de matching;
 - parámetros de ejecución.
 
+### 4.1 Wizard funcional validado
+
+El wizard debe preservar, como mínimo, estas etapas:
+
+1. **Origen y destino**: proceso, dominio, descripción, conexiones/datasets/tablas y filtros.
+2. **Análisis**: metadata compatible, claves de negocio, columna de fecha, métricas `COUNT` y `SUM`.
+3. **Reglas**: umbrales, tolerancias y reglas de matching.
+4. **Confirmación**: resumen completo, responsable, validación y publicación.
+
+La evidencia actual no contiene una captura independiente del paso 3, pero el stepper lo identifica como `Reglas — Umbrales y tolerancias` y sus valores aparecen consolidados en la pantalla final.
+
 ## 5. Validación previa a publicación
 
 La validación debe comprobar:
@@ -57,12 +117,16 @@ La validación debe comprobar:
 - existencia de origen y destino;
 - existencia y compatibilidad de columnas;
 - claves de negocio válidas;
+- columna de fecha válida cuando corresponda;
+- métricas de conteo/sumarización compatibles;
 - expresiones/filtros permitidos;
 - tolerancias coherentes;
 - ausencia de referencias inseguras o no autorizadas;
 - payload completo para poder ejecutar.
 
 Validar no equivale a publicar.
+
+Si una configuración validada es modificada antes de publicar, la validez debe invalidarse o recalcularse según contrato; nunca debe reutilizarse silenciosamente una validación de un payload anterior.
 
 ## 6. Ciclo de vida
 
@@ -80,7 +144,8 @@ Reglas:
 2. editar una configuración publicada genera nueva versión;
 3. solo una versión publicada vigente puede ser la activa;
 4. cada ejecución referencia configuración y versión exactas;
-5. archivar no borra ejecución ni evidencia histórica.
+5. archivar no borra ejecución ni evidencia histórica;
+6. la publicación solo ocurre por una acción humana/automatizada explícita posterior a una validación satisfactoria.
 
 ## 7. Ejecución
 
@@ -101,6 +166,8 @@ La ejecución debe devolver como mínimo:
 - tolerancias aplicadas;
 - estado final (`CONFORME`, `OBSERVADO`, `CRITICO` o contrato equivalente);
 - timestamps y evidencia de error.
+
+La UX debe permitir búsqueda/filtro de configuraciones activas y un panel explícito para preparar la ejecución con fecha de negocio y solicitante.
 
 ### 7.2 Programada
 
@@ -162,12 +229,36 @@ El resultado debe indicar qué tolerancia provocó `CONFORME`, `OBSERVADO` o `CR
 
 Toda ejecución permite reconstruir configuración/version, usuario o scheduler, fecha de negocio, métricas, resultado y timestamps.
 
+### AC-REC-08 — Doble ruta desde catálogo
+
+Desde Data Reconciliation, el usuario puede escoger una configuración `ACTIVE` para ejecutarla o iniciar `+ Nueva cuadratura` sin abandonar el producto ni duplicar la lógica de backend.
+
+### AC-REC-09 — Continuidad del wizard
+
+La selección de proceso, dominio, origen/destino, metadata compatible, claves, fecha y métricas debe preservarse entre los pasos del wizard y reflejarse sin pérdida en la confirmación final.
+
+### AC-REC-10 — Recomendación asistida
+
+Las recomendaciones de Gemini sobre claves/métricas son editables y no se publican automáticamente. El usuario puede incluir/excluir recomendaciones antes de guardar/validar.
+
+### AC-REC-11 — Gate de publicación
+
+`Confirmar y publicar` solo debe operar sobre el draft/versión que obtuvo validación satisfactoria. Cualquier cambio relevante posterior obliga a repetir la validación.
+
+### AC-REC-12 — Retorno al catálogo
+
+Después de publicar, la reconciliación debe estar disponible en el catálogo como `ACTIVE`; al seleccionarla para ejecución, el runtime debe usar la versión canónica publicada.
+
 ## 10. Cobertura actual
 
 | Capacidad | Estado |
 |---|---|
+| Catálogo de cuadraturas / doble ruta | IMPLEMENTED / evidencia visual; release exacto TO_VALIDATE |
 | Navegación metadata origen/destino | IMPLEMENTED / TO_VALIDATE runtime |
-| Wizard de configuración | IMPLEMENTED en frontend V2 branch |
+| Wizard paso 1 Origen/Destino | IMPLEMENTED en frontend V2 branch / evidencia visual |
+| Wizard paso 2 Análisis y métricas | IMPLEMENTED en frontend V2 branch / evidencia visual |
+| Wizard paso 3 Reglas/tolerancias | IMPLEMENTED/PARTIAL; sin captura independiente en evidencia actual |
+| Wizard paso 4 Confirmación | IMPLEMENTED en frontend V2 branch / evidencia visual |
 | CRUD canónico | IMPLEMENTED en backend branch |
 | Validación/publicación/versionado | IMPLEMENTED en backend branch |
 | Ejecución on-demand | IMPLEMENTED en backend operativo |
