@@ -15,12 +15,16 @@ La definición funcional SDD de **Perfilamiento/Calidad** y **Reconciliación/Cu
 
 ## Documentos canónicos
 
+### Arquitectura de la demo
+- [Arquitectura AS-IS — Enterprise DataOps Demo](demo-as-is.md) — frontend Cloud Run, BFF, Jarvis, BigQuery, Gemini, ownership, Mermaid y brechas conocidas.
+
 ### SDD funcional
 - [Índice SDD Quality & Reconciliation](../sdd/README.md)
 - [SPEC-001 — Data Profiling & Quality Lifecycle](../sdd/SPEC-001-data-quality-lifecycle.md)
 - [SPEC-002 — Reconciliation Lifecycle](../sdd/SPEC-002-reconciliation-lifecycle.md)
 - [Requerimientos funcionales](../sdd/requirements-functional.md)
 - [Requerimientos no funcionales](../sdd/requirements-non-functional.md)
+- [Evidencia visual y journeys Mermaid](../sdd/ui-journey-evidence.md)
 - [Trazabilidad y baseline de código](../sdd/traceability-code-baseline.md)
 
 ### Límites y routing
@@ -48,9 +52,11 @@ docs/
 │   ├── SPEC-002-reconciliation-lifecycle.md
 │   ├── requirements-functional.md
 │   ├── requirements-non-functional.md
+│   ├── ui-journey-evidence.md
 │   └── traceability-code-baseline.md
 ├── architecture/
 │   ├── README.md
+│   ├── demo-as-is.md
 │   ├── adr-*.md
 │   ├── api-contracts/
 │   ├── implementation-plans/
