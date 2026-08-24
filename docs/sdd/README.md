@@ -55,6 +55,7 @@ Es un producto/backend separado para Bronze → Silver, transformación, mapeo, 
 - [`SPEC-002-reconciliation-lifecycle.md`](SPEC-002-reconciliation-lifecycle.md)
 - [`requirements-functional.md`](requirements-functional.md)
 - [`requirements-non-functional.md`](requirements-non-functional.md)
+- [`ui-journey-evidence.md`](ui-journey-evidence.md) — catálogo de las capturas UX validadas y flujos Mermaid.
 - [`traceability-code-baseline.md`](traceability-code-baseline.md)
 
 ## 4. Regla SDD
@@ -64,6 +65,8 @@ Todo incremento debe seguir:
 `Necesidad → SPEC → RF/RNF → contrato → código → pruebas → evidencia → release`
 
 Un requisito no se considera implementado solamente porque exista una pantalla o un endpoint. Debe tener trazabilidad hacia código ejecutable y evidencia de validación.
+
+Toda modificación relevante del journey debe actualizar también la evidencia visual y el Mermaid asociado para evitar divergencia entre UX, SPEC y código.
 
 ## 5. Estados de cobertura
 
@@ -96,4 +99,5 @@ No promover a `main` ni desplegar una nueva versión sin conservar:
 - resultados de pruebas y smoke;
 - imagen/digest desplegado o equivalente;
 - matriz RF/RNF actualizada;
+- evidencia visual cuando cambie el journey;
 - evidencia del ambiente validado.
