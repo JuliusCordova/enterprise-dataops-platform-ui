@@ -2,7 +2,10 @@
 
 **Estado:** BASELINE / REVIEWED  
 **Fecha:** 2026-08-24  
-**Repositorio documental canónico:** `JuliusCordova/enterprise-dataops-platform-ui`
+**Repositorio documental canónico:** `JuliusCordova/enterprise-dataops-platform-ui`  
+**Frontend actual de referencia:** [Enterprise DataOps Platform — Cloud Run](https://enterprise-dataops-platform-ui-mkqutd4koq-uc.a.run.app)
+
+> La URL anterior identifica el frontend actualmente utilizado como referencia funcional/visual. La relación exacta de la revisión desplegada con un SHA de GitHub e image digest continúa en estado `TO_VALIDATE` hasta completar la certificación de release.
 
 ## 1. Propósito
 
@@ -80,6 +83,7 @@ Toda modificación relevante del journey debe actualizar también la evidencia v
 A la fecha de este baseline:
 
 - el frontend/BFF base está versionado en `main`;
+- el frontend actual de referencia funcional está disponible en `https://enterprise-dataops-platform-ui-mkqutd4koq-uc.a.run.app`;
 - la evolución V2 y documentación arquitectónica están en `architecture/backend-routing-matrix`, 20 commits por delante de `main`;
 - el backend Quality/Reconciliation está versionado en `intercorp-fest-agent`, rama `feature/data-quality-engine`, 6 commits por delante de `main`;
 - perfilamiento actual de BigQuery está implementado;
@@ -87,7 +91,8 @@ A la fecha de este baseline:
 - ejecución on-demand de Quality está implementada;
 - ejecución on-demand de Reconciliation existe en el backend legacy/operativo y debe alinearse con la configuración canónica;
 - perfilamiento histórico parametrizado no está cerrado;
-- scheduling persistente/gestionado no fue encontrado y se considera GAP hasta implementación y certificación.
+- scheduling persistente/gestionado no fue encontrado y se considera GAP hasta implementación y certificación;
+- la revisión exacta de Cloud Run aún debe vincularse a SHA/image digest para cerrar trazabilidad de release.
 
 ## 7. Regla de release
 
@@ -100,4 +105,5 @@ No promover a `main` ni desplegar una nueva versión sin conservar:
 - imagen/digest desplegado o equivalente;
 - matriz RF/RNF actualizada;
 - evidencia visual cuando cambie el journey;
+- URL/revisión del frontend desplegado;
 - evidencia del ambiente validado.
