@@ -1,9 +1,20 @@
 # Matriz de trazabilidad y baseline de código
 
 **Fecha de auditoría:** 2026-08-24  
-**Objetivo:** identificar dónde está versionada cada capacidad y qué falta consolidar.
+**Objetivo:** identificar dónde está versionada cada capacidad y qué falta consolidar.  
+**Frontend actual de referencia:** [Enterprise DataOps Platform — Cloud Run](https://enterprise-dataops-platform-ui-mkqutd4koq-uc.a.run.app)
+
+> La URL anterior queda registrada como endpoint funcional actual de referencia. Esta auditoría todavía no certifica qué SHA/image digest exacto corresponde a la revisión Cloud Run actualmente servida.
 
 ## 1. Repositorio `enterprise-dataops-platform-ui`
+
+### Runtime actual de referencia
+
+Frontend desplegado utilizado para validar visualmente los journeys:
+
+`https://enterprise-dataops-platform-ui-mkqutd4koq-uc.a.run.app`
+
+Estado de trazabilidad del runtime: `TO_VALIDATE` para relación exacta `Cloud Run revision/image digest ↔ frontend Git SHA`.
 
 ### `main`
 
@@ -135,6 +146,7 @@ Decisión de ordenamiento:
 
 | Capacidad | UI/BFF | Backend | Estado |
 |---|---|---|---|
+| Frontend Cloud Run de referencia | `https://enterprise-dataops-platform-ui-mkqutd4koq-uc.a.run.app` | n/a | RUNTIME CONOCIDO / SHA TO_VALIDATE |
 | Selección metadata para profiling | `enterprise-dataops-platform-ui` | Jarvis metadata | PARTIAL/TO_VALIDATE |
 | Perfil actual | UI V2 + controller | `intercorp-fest-agent/modules/data_quality/profiling.py` | IMPLEMENTED |
 | Perfil histórico | diseño pendiente UI | no encontrado | GAP |
@@ -160,7 +172,11 @@ La rama arquitectónica concentra 20 commits no presentes en `main`. Esto crea r
 
 ### R3 — Deployment no certificado contra SHA
 
-La URL Cloud Run del frontend es conocida, pero esta auditoría GitHub no prueba por sí sola qué commit exacto generó la revisión actualmente servida. Debe agregarse evidencia de deployment con commit SHA/image digest.
+El frontend actual está identificado en:
+
+`https://enterprise-dataops-platform-ui-mkqutd4koq-uc.a.run.app`
+
+Sin embargo, la URL por sí sola no prueba qué commit exacto generó la revisión actualmente servida. Debe agregarse evidencia de deployment con Cloud Run revision, commit SHA e image digest.
 
 ### R4 — Contratos legacy + canónicos coexistiendo
 
@@ -182,7 +198,7 @@ El profiler actual consulta la tabla directamente sin `business_date`, rango ni 
 4. Alinear lifecycle canónico con ejecución real para Quality y Reconciliation.
 5. Implementar `Historical Profiling`.
 6. Implementar `Scheduling` común reutilizando los endpoints on-demand.
-7. Registrar por release: frontend SHA + backend SHA + OpenAPI + smoke + image digest.
+7. Registrar por release: frontend URL/revision + frontend SHA + backend SHA + OpenAPI + smoke + image digest.
 
 ## 7. Definition of Done de saneamiento
 
@@ -192,5 +208,5 @@ El ordenamiento se considera cerrado cuando:
 - `main` del backend Jarvis contiene las capacidades aprobadas;
 - no existe capacidad P0 únicamente en ramas huérfanas;
 - cada RF P0 apunta a código/prueba/evidencia;
-- el deployment activo puede relacionarse inequívocamente con SHAs de GitHub;
+- el deployment activo `https://enterprise-dataops-platform-ui-mkqutd4koq-uc.a.run.app` puede relacionarse inequívocamente con una revisión Cloud Run, image digest y SHA(s) de GitHub;
 - perfil histórico y scheduling están implementados o explícitamente fuera de release, nunca ambiguos.
