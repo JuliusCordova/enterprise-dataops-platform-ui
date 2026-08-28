@@ -1,0 +1,1 @@
+"""Canonical reconciliation configuration domain."""

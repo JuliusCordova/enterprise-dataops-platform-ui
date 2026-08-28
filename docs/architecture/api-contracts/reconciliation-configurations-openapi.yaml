@@ -1,0 +1,141 @@
+openapi: 3.1.0
+info:
+  title: Enterprise DataOps Reconciliation Configuration API
+  version: 0.1.0-draft
+  description: Propuesta canónica. No reemplaza contratos productivos hasta su implementación y certificación.
+paths:
+  /reconciliation/configurations:
+    get:
+      operationId: listReconciliationConfigurations
+      responses:
+        '200': { description: Lista de configuraciones }
+    post:
+      operationId: createReconciliationConfiguration
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReconciliationConfigurationCreateRequest' }
+      responses:
+        '201': { description: Configuración y versión DRAFT creadas }
+        '409': { description: Conflicto de idempotencia o concurrencia }
+  /reconciliation/configurations/{configurationId}:
+    parameters:
+      - $ref: '#/components/parameters/ConfigurationId'
+    get:
+      operationId: getReconciliationConfiguration
+      responses:
+        '200': { description: Detalle de configuración }
+        '404': { description: No encontrada }
+    put:
+      operationId: updateReconciliationConfiguration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReconciliationConfigurationUpdateRequest' }
+      responses:
+        '200': { description: DRAFT actualizado o nueva versión DRAFT creada }
+        '409': { description: Versión desactualizada }
+    delete:
+      operationId: archiveReconciliationConfiguration
+      responses:
+        '204': { description: Configuración archivada lógicamente }
+  /reconciliation/configurations/{configurationId}/validate:
+    parameters:
+      - $ref: '#/components/parameters/ConfigurationId'
+    post:
+      operationId: validateReconciliationConfiguration
+      responses:
+        '200': { description: Resultado de validación }
+        '409': { description: Estado incompatible con validación }
+  /reconciliation/configurations/{configurationId}/publish:
+    parameters:
+      - $ref: '#/components/parameters/ConfigurationId'
+    post:
+      operationId: publishReconciliationConfiguration
+      responses:
+        '200': { description: Versión publicada y anterior marcada SUPERSEDED }
+        '409': { description: Validación o transición inválida }
+  /reconciliation/configurations/{configurationId}/versions:
+    parameters:
+      - $ref: '#/components/parameters/ConfigurationId'
+    get:
+      operationId: listReconciliationConfigurationVersions
+      responses:
+        '200': { description: Historial de versiones }
+    post:
+      operationId: createReconciliationConfigurationVersion
+      responses:
+        '201': { description: Nueva versión DRAFT creada }
+  /reconciliation/configurations/{configurationId}/status:
+    parameters:
+      - $ref: '#/components/parameters/ConfigurationId'
+    patch:
+      operationId: changeReconciliationConfigurationStatus
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StatusChangeRequest' }
+      responses:
+        '200': { description: Estado actualizado }
+        '409': { description: Transición inválida }
+components:
+  parameters:
+    ConfigurationId:
+      name: configurationId
+      in: path
+      required: true
+      schema: { type: string, minLength: 1 }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      schema: { type: string, minLength: 8, maxLength: 128 }
+  schemas:
+    ReconciliationConfigurationCreateRequest:
+      type: object
+      required: [name, source, target, comparison]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        source: { $ref: '#/components/schemas/DataAssetReference' }
+        target: { $ref: '#/components/schemas/DataAssetReference' }
+        comparison:
+          type: object
+          additionalProperties: true
+        filters:
+          type: array
+          items: { type: object, additionalProperties: true }
+        businessDate:
+          type: object
+          additionalProperties: true
+        executionParameters:
+          type: object
+          additionalProperties: true
+    ReconciliationConfigurationUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/ReconciliationConfigurationCreateRequest'
+        - type: object
+          required: [rowVersion]
+          properties:
+            rowVersion: { type: integer, minimum: 0 }
+    DataAssetReference:
+      type: object
+      required: [connectionId, datasetId, tableId]
+      properties:
+        connectionId: { type: string }
+        datasetId: { type: string }
+        tableId: { type: string }
+    StatusChangeRequest:
+      type: object
+      required: [status, rowVersion]
+      properties:
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, ARCHIVED]
+        rowVersion: { type: integer, minimum: 0 }
+        reason: { type: string }

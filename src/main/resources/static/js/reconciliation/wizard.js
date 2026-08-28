@@ -1,161 +1,99 @@
 (() => {
     "use strict";
 
-    const STORAGE_KEY =
-        "dataOpsReconciliationDraft";
+    const STORAGE_KEY = "dataOpsReconciliationDraftV2";
 
     const state = {
         currentStep: 1,
         connections: [],
-
         sourceColumns: [],
         targetColumns: [],
         commonColumns: [],
-
+        recommendedCountColumns: [],
+        recommendedSumColumns: [],
         draftId: null,
         validationResponse: null,
         publishedResponse: null,
-
         isSaving: false,
         isValidating: false,
         isPublishing: false
     };
 
     const elements = {
-        sourceConnection:
-            document.getElementById("source-connection"),
+        processName: byId("process-name"),
+        domainName: byId("domain-name"),
+        description: byId("reconciliation-description"),
 
-        sourceDataset:
-            document.getElementById("source-dataset"),
+        sourceConnection: byId("source-connection"),
+        sourceDataset: byId("source-dataset"),
+        sourceTable: byId("source-table"),
+        sourceFilter: byId("source-filter"),
 
-        sourceTable:
-            document.getElementById("source-table"),
+        targetConnection: byId("target-connection"),
+        targetDataset: byId("target-dataset"),
+        targetTable: byId("target-table"),
+        targetFilter: byId("target-filter"),
 
-        targetConnection:
-            document.getElementById("target-connection"),
+        sourceSummary: byId("source-selection-summary"),
+        summarySource: byId("summary-source-path"),
+        summaryTarget: byId("summary-target-path"),
 
-        targetDataset:
-            document.getElementById("target-dataset"),
+        metadataLoading: byId("metadata-analysis-loading"),
+        commonColumnCount: byId("common-column-count"),
+        mappingRecommendation: byId("mapping-recommendation"),
+        businessKey: byId("business-key-select"),
+        dateColumn: byId("date-column-select"),
+        commonColumnsGrid: byId("common-columns-grid"),
 
-        targetTable:
-            document.getElementById("target-table"),
+        countColumnsGrid: byId("count-columns-grid"),
+        countMetricCount: byId("count-metric-count"),
+        sumColumnsGrid: byId("sum-columns-grid"),
+        sumMetricCount: byId("sum-metric-count"),
 
-        sourceSummary:
-            document.getElementById("source-selection-summary"),
+        rowTolerance: byId("row-tolerance"),
+        countTolerance: byId("count-tolerance"),
+        amountTolerance: byId("amount-tolerance"),
+        selectedMetricsSummary: byId("selected-metrics-summary"),
 
-        summarySource:
-            document.getElementById("summary-source-path"),
+        requestedBy: byId("wizard-requested-by"),
+        review: byId("wizard-review-content"),
 
-        summaryTarget:
-            document.getElementById("summary-target-path"),
+        publicationStatus: byId("wizard-publication-status"),
+        validationSection: byId("wizard-validation-section"),
+        validationStatus: byId("wizard-validation-status"),
+        validationContent: byId("wizard-validation-content"),
 
-        metadataLoading:
-            document.getElementById("metadata-analysis-loading"),
+        message: byId("wizard-message"),
+        backButton: byId("wizard-back-button"),
+        nextButton: byId("wizard-next-button"),
+        saveButton: byId("wizard-save-button"),
+        validateButton: byId("wizard-validate-button"),
+        publishButton: byId("wizard-publish-button"),
 
-        commonColumnCount:
-            document.getElementById("common-column-count"),
-
-        mappingRecommendation:
-            document.getElementById("mapping-recommendation"),
-
-        businessKey:
-            document.getElementById("business-key-select"),
-
-        dateColumn:
-            document.getElementById("date-column-select"),
-
-        commonColumnsGrid:
-            document.getElementById("common-columns-grid"),
-
-        sumColumnsGrid:
-            document.getElementById("sum-columns-grid"),
-
-        rowTolerance:
-            document.getElementById("row-tolerance"),
-
-        amountTolerance:
-            document.getElementById("amount-tolerance"),
-
-        sourceFilter:
-            document.getElementById("source-filter"),
-
-        targetFilter:
-            document.getElementById("target-filter"),
-
-        processName:
-            document.getElementById("process-name"),
-
-        domainName:
-            document.getElementById("domain-name"),
-
-        description:
-            document.getElementById("reconciliation-description"),
-
-        requestedBy:
-            document.getElementById("wizard-requested-by"),
-
-        review:
-            document.getElementById("wizard-review-content"),
-
-        publicationStatus:
-            document.getElementById("wizard-publication-status"),
-
-        validationSection:
-            document.getElementById("wizard-validation-section"),
-
-        validationStatus:
-            document.getElementById("wizard-validation-status"),
-
-        validationContent:
-            document.getElementById("wizard-validation-content"),
-
-        message:
-            document.getElementById("wizard-message"),
-
-        backButton:
-            document.getElementById("wizard-back-button"),
-
-        nextButton:
-            document.getElementById("wizard-next-button"),
-
-        saveButton:
-            document.getElementById("wizard-save-button"),
-
-        validateButton:
-            document.getElementById("wizard-validate-button"),
-
-        publishButton:
-            document.getElementById("wizard-publish-button"),
-
-        advisorTitle:
-            document.getElementById("wizard-advisor-title"),
-
-        advisorMessage:
-            document.getElementById("wizard-advisor-message"),
-
-        checklist:
-            document.getElementById("wizard-checklist")
+        advisorTitle: byId("wizard-advisor-title"),
+        advisorMessage: byId("wizard-advisor-message"),
+        checklist: byId("wizard-checklist")
     };
 
     async function initialize() {
         validateElements();
         bindEvents();
+        restoreLocalValues();
         await loadConnections();
-        restoreLocalDraft();
         renderCurrentStep();
     }
 
+    function byId(id) {
+        return document.getElementById(id);
+    }
+
     function validateElements() {
-        const missing =
-            Object.entries(elements)
-                .filter(([, element]) => !element)
-                .map(([name]) => name);
+        const missing = Object.entries(elements)
+            .filter(([, element]) => !element)
+            .map(([name]) => name);
 
         if (missing.length > 0) {
-            throw new Error(
-                "Faltan elementos requeridos: "
-                + missing.join(", ")
-            );
+            throw new Error("Faltan elementos requeridos: " + missing.join(", "));
         }
     }
 
@@ -180,113 +118,57 @@
             () => handleDatasetChange("target")
         );
 
-        elements.sourceTable.addEventListener(
-            "change",
-            handleSourceSelectionChange
-        );
+        elements.sourceTable.addEventListener("change", handleSourceChange);
+        elements.targetTable.addEventListener("change", handleSourceChange);
 
-        elements.targetTable.addEventListener(
-            "change",
-            handleSourceSelectionChange
-        );
+        elements.backButton.addEventListener("click", previousStep);
+        elements.nextButton.addEventListener("click", nextStep);
+        elements.saveButton.addEventListener("click", saveDraft);
+        elements.validateButton.addEventListener("click", validateDraft);
+        elements.publishButton.addEventListener("click", publishDraft);
 
-        elements.backButton.addEventListener(
-            "click",
-            previousStep
-        );
+        document.querySelectorAll("[data-step-target]").forEach(button => {
+            button.addEventListener("click", () => {
+                const target = Number(button.dataset.stepTarget);
 
-        elements.nextButton.addEventListener(
-            "click",
-            nextStep
-        );
-
-        elements.saveButton.addEventListener(
-            "click",
-            saveDraft
-        );
-
-        elements.validateButton.addEventListener(
-            "click",
-            validateDraft
-        );
-
-        elements.publishButton.addEventListener(
-            "click",
-            publishDraft
-        );
-
-        document
-            .querySelectorAll("[data-step-target]")
-            .forEach(button => {
-                button.addEventListener(
-                    "click",
-                    () => {
-                        const target =
-                            Number(
-                                button.dataset.stepTarget
-                            );
-
-                        if (
-                            !button.disabled
-                            && target <= state.currentStep
-                        ) {
-                            state.currentStep = target;
-                            renderCurrentStep();
-                        }
-                    }
-                );
+                if (!button.disabled && target <= state.currentStep) {
+                    state.currentStep = target;
+                    renderCurrentStep();
+                }
             });
+        });
 
         [
-            elements.rowTolerance,
-            elements.amountTolerance,
-            elements.sourceFilter,
-            elements.targetFilter,
             elements.processName,
             elements.domainName,
             elements.description,
-            elements.requestedBy,
+            elements.sourceFilter,
+            elements.targetFilter,
             elements.businessKey,
-            elements.dateColumn
+            elements.dateColumn,
+            elements.rowTolerance,
+            elements.countTolerance,
+            elements.amountTolerance,
+            elements.requestedBy
         ].forEach(element => {
-            element.addEventListener(
-                "change",
-                handleConfigurationChange
-            );
-
-            element.addEventListener(
-                "input",
-                handleConfigurationChange
-            );
+            element.addEventListener("input", handleConfigurationChange);
+            element.addEventListener("change", handleConfigurationChange);
         });
     }
 
     async function loadConnections() {
-        setSelectLoading(
-            elements.sourceConnection,
-            "Cargando conexiones..."
-        );
-
-        setSelectLoading(
-            elements.targetConnection,
-            "Cargando conexiones..."
-        );
+        setSelectLoading(elements.sourceConnection, "Cargando conexiones...");
+        setSelectLoading(elements.targetConnection, "Cargando conexiones...");
 
         try {
-            const payload =
-                await apiRequest(
-                    "/ui/api/reconciliation/connections"
-                );
+            const payload = await apiRequest(
+                "/ui/api/reconciliation/connections"
+            );
 
-            state.connections =
-                extractArray(
-                    payload,
-                    [
-                        "connections",
-                        "items",
-                        "data"
-                    ]
-                );
+            state.connections = extractArray(
+                payload,
+                ["connections", "items", "data"]
+            );
 
             populateSelect(
                 elements.sourceConnection,
@@ -304,25 +186,19 @@
                 connectionLabel
             );
 
-            elements.sourceConnection.disabled =
-                state.connections.length === 0;
-
-            elements.targetConnection.disabled =
-                state.connections.length === 0;
+            elements.sourceConnection.disabled = state.connections.length === 0;
+            elements.targetConnection.disabled = state.connections.length === 0;
 
         } catch (error) {
             showMessage(
-                "No se pudieron cargar las conexiones: "
-                    + error.message,
+                "No se pudieron cargar las conexiones: " + error.message,
                 "error"
             );
         }
     }
 
-    async function handleConnectionChange(
-        side
-    ) {
-        invalidateDraft();
+    async function handleConnectionChange(side) {
+        invalidateValidation();
 
         const connectionSelect =
             side === "source"
@@ -339,46 +215,29 @@
                 ? elements.sourceTable
                 : elements.targetTable;
 
-        resetSelect(
-            tableSelect,
-            "Selecciona un dataset"
-        );
-
+        resetSelect(tableSelect, "Selecciona un dataset");
         tableSelect.disabled = true;
 
         if (!connectionSelect.value) {
-            resetSelect(
-                datasetSelect,
-                "Selecciona una conexión"
-            );
-
+            resetSelect(datasetSelect, "Selecciona una conexión");
             datasetSelect.disabled = true;
             updateSourceSummary();
             return;
         }
 
-        setSelectLoading(
-            datasetSelect,
-            "Cargando datasets..."
-        );
+        setSelectLoading(datasetSelect, "Cargando datasets...");
 
         try {
-            const payload =
-                await apiRequest(
-                    `/ui/api/reconciliation/metadata/${encodeURIComponent(
-                        connectionSelect.value
-                    )}/datasets`
-                );
+            const payload = await apiRequest(
+                `/ui/api/reconciliation/metadata/${encodeURIComponent(
+                    connectionSelect.value
+                )}/datasets`
+            );
 
-            const datasets =
-                extractArray(
-                    payload,
-                    [
-                        "datasets",
-                        "items",
-                        "data"
-                    ]
-                );
+            const datasets = extractArray(
+                payload,
+                ["datasets", "items", "data"]
+            );
 
             populateSelect(
                 datasetSelect,
@@ -388,24 +247,20 @@
                 datasetLabel
             );
 
-            datasetSelect.disabled =
-                datasets.length === 0;
+            datasetSelect.disabled = datasets.length === 0;
 
         } catch (error) {
-            showMessage(
-                "No se pudieron cargar los datasets: "
-                    + error.message,
-                "error"
-            );
+            resetSelect(datasetSelect, "No fue posible cargar datasets");
+            datasetSelect.disabled = true;
+            throw error;
         }
 
         updateSourceSummary();
+        persistLocalState();
     }
 
-    async function handleDatasetChange(
-        side
-    ) {
-        invalidateDraft();
+    async function handleDatasetChange(side) {
+        invalidateValidation();
 
         const connectionSelect =
             side === "source"
@@ -422,44 +277,28 @@
                 ? elements.sourceTable
                 : elements.targetTable;
 
-        if (
-            !connectionSelect.value
-            || !datasetSelect.value
-        ) {
-            resetSelect(
-                tableSelect,
-                "Selecciona un dataset"
-            );
-
+        if (!connectionSelect.value || !datasetSelect.value) {
+            resetSelect(tableSelect, "Selecciona un dataset");
             tableSelect.disabled = true;
             updateSourceSummary();
             return;
         }
 
-        setSelectLoading(
-            tableSelect,
-            "Cargando tablas..."
-        );
+        setSelectLoading(tableSelect, "Cargando tablas...");
 
         try {
-            const payload =
-                await apiRequest(
-                    `/ui/api/reconciliation/metadata/${encodeURIComponent(
-                        connectionSelect.value
-                    )}/${encodeURIComponent(
-                        datasetSelect.value
-                    )}/tables`
-                );
+            const payload = await apiRequest(
+                `/ui/api/reconciliation/metadata/${encodeURIComponent(
+                    connectionSelect.value
+                )}/${encodeURIComponent(
+                    datasetSelect.value
+                )}/tables`
+            );
 
-            const tables =
-                extractArray(
-                    payload,
-                    [
-                        "tables",
-                        "items",
-                        "data"
-                    ]
-                );
+            const tables = extractArray(
+                payload,
+                ["tables", "items", "data"]
+            );
 
             populateSelect(
                 tableSelect,
@@ -469,32 +308,29 @@
                 tableLabel
             );
 
-            tableSelect.disabled =
-                tables.length === 0;
+            tableSelect.disabled = tables.length === 0;
 
         } catch (error) {
-            showMessage(
-                "No se pudieron cargar las tablas: "
-                    + error.message,
-                "error"
-            );
+            resetSelect(tableSelect, "No fue posible cargar tablas");
+            tableSelect.disabled = true;
+            throw error;
         }
 
         updateSourceSummary();
+        persistLocalState();
     }
 
-    function handleSourceSelectionChange() {
-        invalidateDraft();
+    function handleSourceChange() {
+        invalidateValidation();
         updateSourceSummary();
         renderChecklist();
+        persistLocalState();
     }
 
     function updateSourceSummary() {
-        const complete =
-            isSourceSelectionComplete();
+        const complete = isSourceSelectionComplete();
 
-        elements.sourceSummary.hidden =
-            !complete;
+        elements.sourceSummary.hidden = !complete;
 
         if (!complete) {
             return;
@@ -508,14 +344,10 @@
     }
 
     async function analyzeMetadata() {
-        elements.metadataLoading.hidden =
-            false;
+        elements.metadataLoading.hidden = false;
 
         try {
-            const [
-                sourcePayload,
-                targetPayload
-            ] = await Promise.all([
+            const [sourcePayload, targetPayload] = await Promise.all([
                 apiRequest(
                     `/ui/api/reconciliation/metadata/${encodeURIComponent(
                         elements.sourceConnection.value
@@ -525,7 +357,6 @@
                         elements.sourceTable.value
                     )}/columns`
                 ),
-
                 apiRequest(
                     `/ui/api/reconciliation/metadata/${encodeURIComponent(
                         elements.targetConnection.value
@@ -537,41 +368,31 @@
                 )
             ]);
 
-            state.sourceColumns =
-                normalizeColumns(
-                    extractArray(
-                        sourcePayload,
-                        [
-                            "columns",
-                            "items",
-                            "data"
-                        ]
-                    )
-                );
+            state.sourceColumns = normalizeColumns(
+                extractArray(sourcePayload, ["columns", "items", "data"])
+            );
 
-            state.targetColumns =
-                normalizeColumns(
-                    extractArray(
-                        targetPayload,
-                        [
-                            "columns",
-                            "items",
-                            "data"
-                        ]
-                    )
-                );
+            state.targetColumns = normalizeColumns(
+                extractArray(targetPayload, ["columns", "items", "data"])
+            );
 
-            state.commonColumns =
-                findCommonColumns(
-                    state.sourceColumns,
-                    state.targetColumns
-                );
+            state.commonColumns = findCommonColumns(
+                state.sourceColumns,
+                state.targetColumns
+            );
+
+            state.recommendedCountColumns = recommendCountColumns(
+                state.commonColumns
+            );
+
+            state.recommendedSumColumns = recommendSumColumns(
+                state.commonColumns
+            );
 
             renderMetadataProposal();
 
         } finally {
-            elements.metadataLoading.hidden =
-                true;
+            elements.metadataLoading.hidden = true;
         }
     }
 
@@ -591,67 +412,67 @@
                     || column.name
                     || "",
 
-                type:
-                    String(
-                        column.data_type
-                        || column.type
-                        || "UNKNOWN"
-                    ).toUpperCase()
+                type: String(
+                    column.data_type
+                    || column.type
+                    || "UNKNOWN"
+                ).toUpperCase()
             };
         }).filter(column => column.name);
     }
 
-    function findCommonColumns(
-        sourceColumns,
-        targetColumns
-    ) {
-        const targetMap =
-            new Map(
-                targetColumns.map(
-                    column => [
-                        column.name.toLowerCase(),
-                        column
-                    ]
-                )
-            );
+    function findCommonColumns(sourceColumns, targetColumns) {
+        const targetMap = new Map(
+            targetColumns.map(column => [
+                column.name.toLowerCase(),
+                column
+            ])
+        );
 
         return sourceColumns
-            .filter(column =>
-                targetMap.has(
-                    column.name.toLowerCase()
-                )
-            )
+            .filter(column => targetMap.has(column.name.toLowerCase()))
             .map(column => {
-                const targetColumn =
-                    targetMap.get(
-                        column.name.toLowerCase()
-                    );
+                const targetColumn = targetMap.get(
+                    column.name.toLowerCase()
+                );
 
                 return {
                     name: column.name,
                     sourceType: column.type,
                     targetType: targetColumn.type,
-                    compatible:
-                        areTypesCompatible(
-                            column.type,
-                            targetColumn.type
-                        )
+                    compatible: areTypesCompatible(
+                        column.type,
+                        targetColumn.type
+                    )
                 };
             });
     }
 
-    function areTypesCompatible(
-        sourceType,
-        targetType
-    ) {
-        if (sourceType === targetType) {
-            return true;
-        }
+    function recommendCountColumns(columns) {
+        return columns
+            .filter(column =>
+                column.compatible
+                && (
+                    isStringType(column.sourceType)
+                    || /(^|_)id$/i.test(column.name)
+                    || /code|codigo|status|type|category|channel|segment/i
+                        .test(column.name)
+                )
+            )
+            .slice(0, 8)
+            .map(column => column.name);
+    }
 
-        return (
-            isNumericType(sourceType)
-            && isNumericType(targetType)
-        );
+    function recommendSumColumns(columns) {
+        return columns
+            .filter(column =>
+                column.compatible
+                && isNumericType(column.sourceType)
+                && !/(^|_)id$/i.test(column.name)
+                && !/code|codigo|year|month|day/i.test(column.name)
+            )
+            .slice(0, 10)
+            .map(column => column.name);
     }
 
     function renderMetadataProposal() {
@@ -661,89 +482,68 @@
         renderCommonColumns();
         renderBusinessKeyOptions();
         renderDateOptions();
+        renderCountColumns();
         renderSumColumns();
 
-        const keyCandidate =
-            suggestBusinessKey();
-
-        const dateCandidate =
-            suggestDateColumn();
+        const keyCandidate = suggestBusinessKey();
+        const dateCandidate = suggestDateColumn();
 
         if (keyCandidate) {
-            selectMultipleValues(
-                elements.businessKey,
-                [keyCandidate]
-            );
+            selectMultipleValues(elements.businessKey, [keyCandidate]);
         }
 
         if (dateCandidate) {
-            elements.dateColumn.value =
-                dateCandidate;
+            elements.dateColumn.value = dateCandidate;
         }
 
         elements.mappingRecommendation.textContent =
             state.commonColumns.length === 0
-                ? "No existen columnas comunes. Revisa las tablas seleccionadas."
+                ? "No se encontraron columnas comunes. Revisa las tablas seleccionadas."
                 : (
-                    `Se identificaron ${state.commonColumns.length} columnas comunes. `
-                    + (
-                        keyCandidate
-                            ? `${keyCandidate} fue propuesta como clave. `
-                            : "Selecciona manualmente una clave. "
-                    )
-                    + (
-                        dateCandidate
-                            ? `${dateCandidate} fue propuesta como fecha.`
-                            : "No se encontró una fecha candidata."
-                    )
+                    `Se identificaron ${state.commonColumns.length} columnas comunes, `
+                    + `${state.recommendedCountColumns.length} candidatas para conteo y `
+                    + `${state.recommendedSumColumns.length} candidatas para sumarización. `
+                    + "Puedes modificar libremente la selección."
                 );
+
+        updateMetricCounters();
     }
 
     function renderCommonColumns() {
-        elements.commonColumnsGrid.innerHTML =
-            state.commonColumns
-                .map(column => `
-                    <article class="common-column-card">
-
-                        <strong>
-                            ${escapeHtml(column.name)}
-                        </strong>
-
-                        <span>
-                            ${escapeHtml(column.sourceType)}
-                            →
-                            ${escapeHtml(column.targetType)}
-                        </span>
-
-                        <small class="${
+        elements.commonColumnsGrid.innerHTML = state.commonColumns
+            .map(column => `
+                <article class="common-column-card">
+                    <strong>${escapeHtml(column.name)}</strong>
+                    <span>
+                        ${escapeHtml(column.sourceType)}
+                        →
+                        ${escapeHtml(column.targetType)}
+                    </span>
+                    <small class="${
+                        column.compatible
+                            ? "column-compatible"
+                            : "column-incompatible"
+                    }">
+                        ${
                             column.compatible
-                                ? "column-compatible"
-                                : "column-incompatible"
-                        }">
-                            ${
-                                column.compatible
-                                    ? "Compatible"
-                                    : "Revisar tipos"
-                            }
-                        </small>
-
-                    </article>
-                `)
-                .join("");
+                                ? "Compatible"
+                                : "Revisar tipos"
+                        }
+                    </small>
+                </article>
+            `)
+            .join("");
     }
 
     function renderBusinessKeyOptions() {
-        elements.businessKey.innerHTML =
-            state.commonColumns
-                .filter(column => column.compatible)
-                .map(column => `
-                    <option value="${escapeAttribute(
-                        column.name
-                    )}">
-                        ${escapeHtml(column.name)}
-                    </option>
-                `)
-                .join("");
+        elements.businessKey.innerHTML = state.commonColumns
+            .filter(column => column.compatible)
+            .map(column => `
+                <option value="${escapeAttribute(column.name)}">
+                    ${escapeHtml(column.name)}
+                </option>
+            `)
+            .join("");
     }
 
     function renderDateOptions() {
@@ -756,60 +556,152 @@
                 && isDateType(column.targetType)
             )
             .forEach(column => {
-                const option =
-                    document.createElement("option");
-
+                const option = document.createElement("option");
                 option.value = column.name;
                 option.textContent = column.name;
-
-                elements.dateColumn.appendChild(
-                    option
-                );
+                elements.dateColumn.appendChild(option);
             });
     }
 
-    function renderSumColumns() {
-        elements.sumColumnsGrid.innerHTML =
-            state.commonColumns
-                .filter(column =>
-                    isNumericType(column.sourceType)
-                    && isNumericType(column.targetType)
+    function renderCountColumns() {
+        const candidates = state.commonColumns
+            .filter(column =>
+                column.compatible
+                && (
+                    isStringType(column.sourceType)
+                    || /(^|_)id$/i.test(column.name)
+                    || /code|codigo|status|type|category|channel|segment/i
+                        .test(column.name)
                 )
-                .map(column => `
-                    <label class="wizard-checkbox-card">
+            );
 
-                        <input
-                            type="checkbox"
-                            name="sum-column"
-                            value="${escapeAttribute(
-                                column.name
-                            )}"
-                            checked>
+        elements.countColumnsGrid.innerHTML = candidates
+            .map(column => metricCardHtml(
+                "count-column",
+                column,
+                state.recommendedCountColumns.includes(column.name),
+                "COUNT"
+            ))
+            .join("");
 
-                        <div>
+        bindMetricCheckboxes();
+    }
 
-                            <strong>
-                                ${escapeHtml(column.name)}
-                            </strong>
+    function renderSumColumns() {
+        const candidates = state.commonColumns
+            .filter(column =>
+                column.compatible
+                && isNumericType(column.sourceType)
+            );
 
-                            <span>
-                                ${escapeHtml(column.sourceType)}
-                            </span>
+        elements.sumColumnsGrid.innerHTML = candidates
+            .map(column => metricCardHtml(
+                "sum-column",
+                column,
+                state.recommendedSumColumns.includes(column.name),
+                "SUM"
+            ))
+            .join("");
 
-                        </div>
+        bindMetricCheckboxes();
+    }
 
-                    </label>
-                `)
-                .join("");
+    function metricCardHtml(name, column, checked, operation) {
+        return `
+            <label class="metric-choice-card">
+                <input
+                    type="checkbox"
+                    name="${escapeAttribute(name)}"
+                    value="${escapeAttribute(column.name)}"
+                    ${checked ? "checked" : ""}>
 
-        elements.sumColumnsGrid
-            .querySelectorAll("input")
+                <div class="metric-choice-main">
+                    <div>
+                        <strong>${escapeHtml(column.name)}</strong>
+                        <span>${escapeHtml(column.sourceType)}</span>
+                    </div>
+
+                    <span class="metric-operation-chip">
+                        ${escapeHtml(operation)}
+                    </span>
+                </div>
+
+                <small>
+                    ${
+                        checked
+                            ? "Recomendada por Gemini"
+                            : "Disponible para selección"
+                    }
+                </small>
+            </label>
+        `;
+    }
+
+    function bindMetricCheckboxes() {
+        document
+            .querySelectorAll(
+                'input[name="count-column"], input[name="sum-column"]'
+            )
             .forEach(input => {
-                input.addEventListener(
-                    "change",
-                    handleConfigurationChange
-                );
+                input.addEventListener("change", () => {
+                    invalidateValidation();
+                    updateMetricCounters();
+                    renderSelectedMetricsSummary();
+                    renderChecklist();
+                    persistLocalState();
+                });
             });
+    }
+
+    function updateMetricCounters() {
+        elements.countMetricCount.textContent =
+            `${getSelectedCountColumns().length} seleccionadas`;
+
+        elements.sumMetricCount.textContent =
+            `${getSelectedSumColumns().length} seleccionadas`;
+    }
+
+    function renderSelectedMetricsSummary() {
+        const counts = getSelectedCountColumns();
+        const sums = getSelectedSumColumns();
+
+        elements.selectedMetricsSummary.innerHTML = `
+            <div>
+                <span>Conteo total</span>
+                <strong>Siempre incluido</strong>
+            </div>
+
+            <div>
+                <span>Conteos por columna</span>
+                <strong>
+                    ${escapeHtml(
+                        counts.length > 0
+                            ? counts.join(", ")
+                            : "Ninguno"
+                    )}
+                </strong>
+            </div>
+
+            <div>
+                <span>Sumarizaciones</span>
+                <strong>
+                    ${escapeHtml(
+                        sums.length > 0
+                            ? sums.join(", ")
+                            : "Ninguna"
+                    )}
+                </strong>
+            </div>
+
+            <div>
+                <span>Umbrales</span>
+                <strong>
+                    Filas: ${escapeHtml(elements.rowTolerance.value)}
+                    · Conteos: ${escapeHtml(elements.countTolerance.value)}
+                    · Sumas: ${escapeHtml(elements.amountTolerance.value)}
+                </strong>
+            </div>
+        `;
     }
 
     function suggestBusinessKey() {
@@ -821,14 +713,11 @@
         ];
 
         for (const pattern of preferredPatterns) {
-            const candidate =
-                state.commonColumns.find(
-                    column =>
-                        column.compatible
-                        && pattern.test(
-                            column.name
-                        )
-                );
+            const candidate = state.commonColumns.find(
+                column =>
+                    column.compatible
+                    && pattern.test(column.name)
+            );
 
             if (candidate) {
                 return candidate.name;
@@ -847,19 +736,16 @@
             /timestamp/i
         ];
 
-        const dateColumns =
-            state.commonColumns.filter(
-                column =>
-                    isDateType(column.sourceType)
-                    && isDateType(column.targetType)
-            );
+        const dateColumns = state.commonColumns.filter(
+            column =>
+                isDateType(column.sourceType)
+                && isDateType(column.targetType)
+        );
 
         for (const pattern of preferredPatterns) {
-            const candidate =
-                dateColumns.find(
-                    column =>
-                        pattern.test(column.name)
-                );
+            const candidate = dateColumns.find(
+                column => pattern.test(column.name)
+            );
 
             if (candidate) {
                 return candidate.name;
@@ -872,35 +758,36 @@
     async function nextStep() {
         hideMessage();
 
-        const validation =
-            validateStep(
-                state.currentStep
-            );
+        const validation = validateStep(state.currentStep);
 
         if (!validation.valid) {
-            showMessage(
-                validation.message,
-                "warning"
-            );
+            showMessage(validation.message, "warning");
             return;
         }
 
         if (state.currentStep === 1) {
+            elements.nextButton.disabled = true;
+            elements.nextButton.textContent = "Analizando tablas...";
+
             try {
                 await analyzeMetadata();
             } catch (error) {
                 showMessage(
-                    "No se pudo analizar la metadata: "
-                        + error.message,
+                    "No se pudo analizar la metadata: " + error.message,
                     "error"
                 );
                 return;
+            } finally {
+                elements.nextButton.disabled = false;
             }
+        }
+
+        if (state.currentStep === 2) {
+            renderSelectedMetricsSummary();
         }
 
         if (state.currentStep === 3) {
             renderReview();
-            applyDefaultPublicationValues();
         }
 
         if (state.currentStep < 4) {
@@ -919,37 +806,74 @@
     }
 
     function validateStep(step) {
-        if (
-            step === 1
-            && !isSourceSelectionComplete()
-        ) {
-            return {
-                valid: false,
-                message:
-                    "Selecciona conexión, dataset y tabla para origen y destino."
-            };
+        if (step === 1) {
+            if (!elements.processName.value.trim()) {
+                return {
+                    valid: false,
+                    message: "El nombre del proceso es obligatorio."
+                };
+            }
+
+            if (!elements.domainName.value.trim()) {
+                return {
+                    valid: false,
+                    message: "El dominio es obligatorio."
+                };
+            }
+
+            if (!isSourceSelectionComplete()) {
+                return {
+                    valid: false,
+                    message:
+                        "Selecciona conexión, dataset y tabla para origen y destino."
+                };
+            }
         }
 
-        if (
-            step === 2
-            && getSelectedBusinessKeys().length === 0
-        ) {
-            return {
-                valid: false,
-                message:
-                    "Selecciona al menos una clave de negocio."
-            };
+        if (step === 2) {
+            if (getSelectedBusinessKeys().length === 0) {
+                return {
+                    valid: false,
+                    message: "Selecciona al menos una clave de negocio."
+                };
+            }
+
+            if (
+                getSelectedCountColumns().length === 0
+                && getSelectedSumColumns().length === 0
+            ) {
+                return {
+                    valid: false,
+                    message:
+                        "Selecciona al menos una métrica de conteo o sumarización."
+                };
+            }
         }
 
-        if (
-            step === 3
-            && Number(elements.rowTolerance.value) < 0
-        ) {
-            return {
-                valid: false,
-                message:
-                    "La tolerancia de filas no puede ser negativa."
-            };
+        if (step === 3) {
+            if (Number(elements.rowTolerance.value) < 0) {
+                return {
+                    valid: false,
+                    message:
+                        "El umbral de filas no puede ser negativo."
+                };
+            }
+
+            if (Number(elements.countTolerance.value) < 0) {
+                return {
+                    valid: false,
+                    message:
+                        "El umbral de conteo no puede ser negativo."
+                };
+            }
+
+            if (Number(elements.amountTolerance.value) < 0) {
+                return {
+                    valid: false,
+                    message:
+                        "El umbral de sumarización no puede ser negativo."
+                };
+            }
         }
 
         return {
@@ -969,79 +893,74 @@
         );
     }
 
-    function applyDefaultPublicationValues() {
-        if (!elements.processName.value.trim()) {
-            elements.processName.value =
-                `Cuadratura ${humanize(
-                    elements.sourceTable.value
-                )} vs ${humanize(
-                    elements.targetTable.value
-                )}`;
-        }
-
-        if (!elements.description.value.trim()) {
-            elements.description.value =
-                `Comparación entre ${elements.sourceDataset.value}.${elements.sourceTable.value} y ${elements.targetDataset.value}.${elements.targetTable.value}.`;
-        }
-    }
-
     function renderReview() {
-        const keys =
-            getSelectedBusinessKeys();
-
-        const sums =
-            getSelectedSumColumns();
+        const keys = getSelectedBusinessKeys();
+        const counts = getSelectedCountColumns();
+        const sums = getSelectedSumColumns();
 
         elements.review.innerHTML = `
             <div>
+                <span>Proceso</span>
+                <strong>${escapeHtml(elements.processName.value.trim())}</strong>
+            </div>
+
+            <div>
+                <span>Dominio</span>
+                <strong>${escapeHtml(elements.domainName.value.trim())}</strong>
+            </div>
+
+            <div>
                 <span>Origen</span>
-                <strong>${escapeHtml(
-                    `${elements.sourceDataset.value}.${elements.sourceTable.value}`
-                )}</strong>
+                <strong>
+                    ${escapeHtml(
+                        `${elements.sourceDataset.value}.${elements.sourceTable.value}`
+                    )}
+                </strong>
             </div>
 
             <div>
                 <span>Destino</span>
-                <strong>${escapeHtml(
-                    `${elements.targetDataset.value}.${elements.targetTable.value}`
-                )}</strong>
+                <strong>
+                    ${escapeHtml(
+                        `${elements.targetDataset.value}.${elements.targetTable.value}`
+                    )}
+                </strong>
             </div>
 
             <div>
                 <span>Claves</span>
-                <strong>${escapeHtml(
-                    keys.join(", ")
-                )}</strong>
+                <strong>${escapeHtml(keys.join(", "))}</strong>
             </div>
 
             <div>
                 <span>Fecha</span>
-                <strong>${escapeHtml(
-                    elements.dateColumn.value
-                    || "Sin filtro de fecha"
-                )}</strong>
-            </div>
-
-            <div>
-                <span>Métricas</span>
-                <strong>${escapeHtml(
-                    sums.length > 0
-                        ? sums.join(", ")
-                        : "Solo conteo de filas"
-                )}</strong>
-            </div>
-
-            <div>
-                <span>Tolerancias</span>
                 <strong>
-                    Filas:
                     ${escapeHtml(
-                        elements.rowTolerance.value
+                        elements.dateColumn.value || "Sin filtro automático"
                     )}
-                    · Montos:
-                    ${escapeHtml(
-                        elements.amountTolerance.value
-                    )}
+                </strong>
+            </div>
+
+            <div>
+                <span>Métricas de conteo</span>
+                <strong>
+                    ${escapeHtml(counts.length ? counts.join(", ") : "Ninguna")}
+                </strong>
+            </div>
+
+            <div>
+                <span>Métricas de sumarización</span>
+                <strong>
+                    ${escapeHtml(sums.length ? sums.join(", ") : "Ninguna")}
+                </strong>
+            </div>
+
+            <div>
+                <span>Umbrales</span>
+                <strong>
+                    Filas: ${escapeHtml(elements.rowTolerance.value)}
+                    · Conteos: ${escapeHtml(elements.countTolerance.value)}
+                    · Sumas: ${escapeHtml(elements.amountTolerance.value)}
                 </strong>
             </div>
         `;
@@ -1050,14 +969,10 @@
     async function saveDraft() {
         hideMessage();
 
-        const validation =
-            validatePublicationData();
+        const validation = validatePublicationData();
 
         if (!validation.valid) {
-            showMessage(
-                validation.message,
-                "warning"
-            );
+            showMessage(validation.message, "warning");
             return;
         }
 
@@ -1065,88 +980,59 @@
         updateActionState();
 
         elements.saveButton.textContent =
-            state.draftId
-                ? "Actualizando..."
-                : "Guardando...";
+            state.draftId ? "Actualizando..." : "Guardando...";
 
         try {
-            const payload =
-                buildDraftPayload();
-
+            const payload = buildDraftPayload();
             let response;
 
             if (state.draftId) {
-                response =
-                    await apiRequest(
-                        `/ui/api/reconciliation/draft/${encodeURIComponent(
-                            state.draftId
-                        )}`,
-                        {
-                            method: "PUT",
-                            headers: {
-                                "Content-Type":
-                                    "application/json"
-                            },
-                            body:
-                                JSON.stringify({
-                                    process_name:
-                                        payload.process_name,
-
-                                    domain_name:
-                                        payload.domain_name,
-
-                                    description:
-                                        payload.description,
-
-                                    business_key:
-                                        payload.business_key,
-
-                                    date_column:
-                                        payload.date_column,
-
-                                    sum_columns:
-                                        payload.sum_columns,
-
-                                    row_tolerance:
-                                        payload.row_tolerance,
-
-                                    amount_tolerance:
-                                        payload.amount_tolerance
-                                })
-                        }
-                    );
-
+                response = await apiRequest(
+                    `/ui/api/reconciliation/draft/${encodeURIComponent(
+                        state.draftId
+                    )}`,
+                    {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            process_name: payload.process_name,
+                            domain_name: payload.domain_name,
+                            description: payload.description,
+                            business_key: payload.business_key,
+                            date_column: payload.date_column,
+                            count_columns: payload.count_columns,
+                            sum_columns: payload.sum_columns,
+                            row_tolerance: payload.row_tolerance,
+                            count_tolerance: payload.count_tolerance,
+                            amount_tolerance: payload.amount_tolerance
+                        })
+                    }
+                );
             } else {
-                response =
-                    await apiRequest(
-                        "/ui/api/reconciliation/draft",
-                        {
-                            method: "POST",
-                            headers: {
-                                "Content-Type":
-                                    "application/json"
-                            },
-                            body:
-                                JSON.stringify(payload)
-                        }
-                    );
-            }
-
-            state.draftId =
-                extractDraftId(response);
-
-            if (!state.draftId) {
-                throw new Error(
-                    "El backend no devolvió draft_id."
+                response = await apiRequest(
+                    "/ui/api/reconciliation/draft",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(payload)
+                    }
                 );
             }
 
+            state.draftId = extractDraftId(response);
+
+            if (!state.draftId) {
+                throw new Error("El backend no devolvió draft_id.");
+            }
+
             state.validationResponse = null;
+            elements.publicationStatus.textContent = "GUARDADO";
 
-            persistLocalDraft();
-
-            elements.publicationStatus.textContent =
-                "GUARDADO";
+            persistLocalState();
 
             showMessage(
                 `Borrador ${state.draftId} guardado correctamente.`,
@@ -1155,191 +1041,106 @@
 
         } catch (error) {
             showMessage(
-                "No se pudo guardar el borrador: "
-                    + error.message,
+                "No se pudo guardar el borrador: " + error.message,
                 "error"
             );
 
         } finally {
             state.isSaving = false;
-            elements.saveButton.textContent =
-                "Guardar borrador";
-
+            elements.saveButton.textContent = "Guardar borrador";
             renderChecklist();
             updateActionState();
         }
     }
 
     function buildDraftPayload() {
-        const dateColumn =
-            elements.dateColumn.value
-            || null;
-
         return {
-            process_name:
-                elements.processName.value.trim(),
+            process_name: elements.processName.value.trim(),
+            domain_name: elements.domainName.value.trim(),
+            description: elements.description.value.trim() || null,
 
-            domain_name:
-                elements.domainName.value.trim()
-                || null,
+            source_connection_id: elements.sourceConnection.value,
+            source_dataset: elements.sourceDataset.value,
+            source_table: elements.sourceTable.value,
+            source_filter: elements.sourceFilter.value.trim() || null,
 
-            description:
-                elements.description.value.trim()
-                || null,
+            target_connection_id: elements.targetConnection.value,
+            target_dataset: elements.targetDataset.value,
+            target_table: elements.targetTable.value,
+            target_filter: elements.targetFilter.value.trim() || null,
 
-            source_connection_id:
-                elements.sourceConnection.value,
+            business_key: getSelectedBusinessKeys(),
+            date_column: elements.dateColumn.value || null,
 
-            source_dataset:
-                elements.sourceDataset.value,
+            count_columns: getSelectedCountColumns(),
+            sum_columns: getSelectedSumColumns(),
 
-            source_table:
-                elements.sourceTable.value,
+            row_tolerance: Number(elements.rowTolerance.value || 0),
+            count_tolerance: Number(elements.countTolerance.value || 0),
+            amount_tolerance: Number(elements.amountTolerance.value || 0),
 
-            source_filter:
-                buildFilter(
-                    elements.sourceFilter.value,
-                    dateColumn
-                ),
-
-            target_connection_id:
-                elements.targetConnection.value,
-
-            target_dataset:
-                elements.targetDataset.value,
-
-            target_table:
-                elements.targetTable.value,
-
-            target_filter:
-                buildFilter(
-                    elements.targetFilter.value,
-                    dateColumn
-                ),
-
-            business_key:
-                getSelectedBusinessKeys(),
-
-            date_column:
-                dateColumn,
-
-            sum_columns:
-                getSelectedSumColumns(),
-
-            row_tolerance:
-                Number(
-                    elements.rowTolerance.value
-                    || 0
-                ),
-
-            amount_tolerance:
-                Number(
-                    elements.amountTolerance.value
-                    || 0
-                ),
-
-            requested_by:
-                elements.requestedBy.value.trim(),
-
-            session_id:
-                getSessionId()
+            requested_by: elements.requestedBy.value.trim(),
+            session_id: getSessionId()
         };
-    }
-
-    function buildFilter(
-        customFilter,
-        dateColumn
-    ) {
-        const trimmed =
-            String(customFilter || "").trim();
-
-        if (!dateColumn) {
-            return trimmed || null;
-        }
-
-        const dateFilter =
-            `${dateColumn} = @business_date`;
-
-        return trimmed
-            ? `(${trimmed}) AND ${dateFilter}`
-            : dateFilter;
     }
 
     async function validateDraft() {
         hideMessage();
 
         if (!state.draftId) {
-            showMessage(
-                "Guarda primero el borrador.",
-                "warning"
-            );
+            showMessage("Guarda primero el borrador.", "warning");
             return;
         }
 
         state.isValidating = true;
-        elements.validateButton.textContent =
-            "Validando...";
+        elements.validateButton.textContent = "Validando...";
         updateActionState();
 
         try {
-            const response =
-                await apiRequest(
-                    `/ui/api/reconciliation/draft/${encodeURIComponent(
-                        state.draftId
-                    )}/validate`,
-                    {
-                        method: "POST",
-                        headers: {
-                            "Content-Type":
-                                "application/json"
-                        },
-                        body: "{}"
-                    }
-                );
+            const response = await apiRequest(
+                `/ui/api/reconciliation/draft/${encodeURIComponent(
+                    state.draftId
+                )}/validate`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: "{}"
+                }
+            );
 
-            state.validationResponse =
-                response;
-
-            persistLocalDraft();
+            state.validationResponse = response;
+            persistLocalState();
             renderValidation(response);
-
-            elements.validationSection.hidden =
-                false;
+            elements.validationSection.hidden = false;
 
             showMessage(
                 isValidationSuccessful()
                     ? "La configuración está lista para publicarse."
                     : "La configuración presenta observaciones.",
-                isValidationSuccessful()
-                    ? "success"
-                    : "warning"
+                isValidationSuccessful() ? "success" : "warning"
             );
 
         } catch (error) {
             showMessage(
-                "No se pudo validar el borrador: "
-                    + error.message,
+                "No se pudo validar el borrador: " + error.message,
                 "error"
             );
 
         } finally {
             state.isValidating = false;
-            elements.validateButton.textContent =
-                "Validar configuración";
+            elements.validateButton.textContent = "Validar configuración";
             renderChecklist();
             updateActionState();
         }
     }
 
     function renderValidation(response) {
-        const valid =
-            resolveValidationStatus(response)
-            === "VALID";
+        const valid = resolveValidationStatus(response) === "VALID";
 
         elements.validationStatus.textContent =
-            valid
-                ? "VALID"
-                : "OBSERVED";
+            valid ? "VALID" : "OBSERVED";
 
         elements.validationStatus.className =
             "neutral-chip "
@@ -1360,7 +1161,6 @@
 
         elements.validationContent.innerHTML = `
             <article class="validation-checklist-item">
-
                 <span class="${
                     valid
                         ? "validation-icon-success"
@@ -1370,15 +1170,9 @@
                 </span>
 
                 <div>
-                    <strong>
-                        Validación del backend
-                    </strong>
-
-                    <p>
-                        ${escapeHtml(message)}
-                    </p>
+                    <strong>Validación del backend</strong>
+                    <p>${escapeHtml(message)}</p>
                 </div>
-
             </article>
         `;
     }
@@ -1386,10 +1180,7 @@
     async function publishDraft() {
         hideMessage();
 
-        if (
-            !state.draftId
-            || !isValidationSuccessful()
-        ) {
+        if (!state.draftId || !isValidationSuccessful()) {
             showMessage(
                 "La configuración debe estar guardada y validada.",
                 "warning"
@@ -1397,75 +1188,53 @@
             return;
         }
 
+        if (state.publishedResponse) {
+            window.location.assign("/reconciliation");
+            return;
+        }
+
         state.isPublishing = true;
-        elements.publishButton.textContent =
-            "Publicando...";
+        elements.publishButton.textContent = "Publicando...";
         updateActionState();
 
         try {
-            const response =
-                await apiRequest(
-                    `/ui/api/reconciliation/draft/${encodeURIComponent(
-                        state.draftId
-                    )}/confirm`,
-                    {
-                        method: "POST",
-                        headers: {
-                            "Content-Type":
-                                "application/json"
-                        },
-                        body:
-                            JSON.stringify({
-                                confirmed_by:
-                                    elements.requestedBy.value.trim(),
+            const response = await apiRequest(
+                `/ui/api/reconciliation/draft/${encodeURIComponent(
+                    state.draftId
+                )}/confirm`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        confirmed_by: elements.requestedBy.value.trim(),
+                        active_flag: true,
+                        execute_after_confirm: false,
+                        business_date: null
+                    })
+                }
+            );
 
-                                active_flag:
-                                    true,
+            state.publishedResponse = response;
 
-                                execute_after_confirm:
-                                    false,
-
-                                business_date:
-                                    null
-                            })
-                    }
-                );
-
-            state.publishedResponse =
-                response;
-
-            elements.publicationStatus.textContent =
-                "PUBLICADO";
-
+            elements.publicationStatus.textContent = "PUBLICADO";
             elements.publicationStatus.className =
                 "neutral-chip validation-status-valid";
 
-            sessionStorage.removeItem(
-                STORAGE_KEY
-            );
+            sessionStorage.removeItem(STORAGE_KEY);
 
             showMessage(
-                "La cuadratura fue publicada y ya está disponible en el catálogo.",
+                "La reconciliación fue publicada y está disponible en el catálogo.",
                 "success"
             );
 
-            elements.publishButton.textContent =
-                "Ir al catálogo";
-
-            elements.publishButton.disabled =
-                false;
-
-            elements.publishButton.onclick =
-                () => {
-                    window.location.assign(
-                        "/reconciliation"
-                    );
-                };
+            elements.publishButton.textContent = "Ir al catálogo";
+            elements.publishButton.disabled = false;
 
         } catch (error) {
             showMessage(
-                "No se pudo publicar la cuadratura: "
-                    + error.message,
+                "No se pudo publicar la reconciliación: " + error.message,
                 "error"
             );
 
@@ -1481,21 +1250,18 @@
     }
 
     function validatePublicationData() {
-        if (!elements.processName.value.trim()) {
-            return {
-                valid: false,
-                message:
-                    "El nombre del proceso es obligatorio."
-            };
+        for (const step of [1, 2, 3]) {
+            const validation = validateStep(step);
+
+            if (!validation.valid) {
+                return validation;
+            }
         }
 
-        if (!isValidEmail(
-            elements.requestedBy.value.trim()
-        )) {
+        if (!isValidEmail(elements.requestedBy.value.trim())) {
             return {
                 valid: false,
-                message:
-                    "El responsable debe ser un correo válido."
+                message: "El responsable debe ser un correo válido."
             };
         }
 
@@ -1507,149 +1273,134 @@
 
     function renderCurrentStep() {
         for (let step = 1; step <= 4; step += 1) {
-            const panel =
-                document.getElementById(
-                    `wizard-step-${step}`
-                );
-
-            panel.hidden =
+            byId(`wizard-step-${step}`).hidden =
                 step !== state.currentStep;
         }
 
-        document
-            .querySelectorAll("[data-step-target]")
-            .forEach(button => {
-                const step =
-                    Number(
-                        button.dataset.stepTarget
-                    );
+        document.querySelectorAll("[data-step-target]").forEach(button => {
+            const step = Number(button.dataset.stepTarget);
 
-                button.classList.toggle(
-                    "active",
-                    step === state.currentStep
-                );
+            button.classList.toggle(
+                "active",
+                step === state.currentStep
+            );
 
-                button.classList.toggle(
-                    "completed",
-                    step < state.currentStep
-                );
+            button.classList.toggle(
+                "completed",
+                step < state.currentStep
+            );
 
-                button.disabled =
-                    step > state.currentStep;
-            });
+            button.disabled = step > state.currentStep;
+        });
 
-        elements.backButton.disabled =
-            state.currentStep === 1;
+        elements.backButton.disabled = state.currentStep === 1;
 
-        elements.nextButton.hidden =
-            state.currentStep === 4;
+        elements.nextButton.hidden = state.currentStep === 4;
+        elements.saveButton.hidden = state.currentStep !== 4;
+        elements.validateButton.hidden = state.currentStep !== 4;
+        elements.publishButton.hidden = state.currentStep !== 4;
 
-        elements.saveButton.hidden =
-            state.currentStep !== 4;
+        const labels = {
+            1: "Analizar tablas",
+            2: "Definir umbrales",
+            3: "Revisar y confirmar"
+        };
 
-        elements.validateButton.hidden =
-            state.currentStep !== 4;
+        if (state.currentStep < 4) {
+            elements.nextButton.textContent =
+                labels[state.currentStep] || "Continuar";
+        }
 
-        elements.publishButton.hidden =
-            state.currentStep !== 4;
+        if (state.currentStep === 3) {
+            renderSelectedMetricsSummary();
+        }
 
         if (state.currentStep === 4) {
             renderReview();
+
+            if (state.validationResponse) {
+                renderValidation(state.validationResponse);
+                elements.validationSection.hidden = false;
+            }
         }
 
         updateAdvisor();
         renderChecklist();
         updateActionState();
-        persistLocalDraft();
+        persistLocalState();
     }
 
     function updateAdvisor() {
         const content = {
             1: {
-                title:
-                    "Selecciona las fuentes",
+                title: "Define el proceso",
                 message:
-                    "Elige las tablas de origen y destino. El sistema consultará su metadata sin ejecutar SQL libre."
+                    "Completa el nombre, dominio y las tablas de origen y destino."
             },
             2: {
-                title:
-                    "Confirma el mapeo",
+                title: "Selecciona las métricas",
                 message:
-                    "Revisa las columnas comunes, selecciona las claves y confirma la columna de fecha."
+                    "Gemini recomienda opciones, pero tú decides cuáles incluir."
             },
             3: {
-                title:
-                    "Define los controles",
+                title: "Define los umbrales",
                 message:
-                    "Selecciona las métricas numéricas y establece tolerancias proporcionales al proceso."
+                    "Configura diferencias aceptadas para filas, conteos y sumarizaciones."
             },
             4: {
-                title:
-                    "Publica con control humano",
+                title: "Publica con control humano",
                 message:
-                    "Guarda el borrador, valida el contrato con el backend y confirma la publicación."
+                    "Guarda el borrador, valida el contrato y publica la reconciliación."
             }
         }[state.currentStep];
 
-        elements.advisorTitle.textContent =
-            content.title;
-
-        elements.advisorMessage.textContent =
-            content.message;
+        elements.advisorTitle.textContent = content.title;
+        elements.advisorMessage.textContent = content.message;
     }
 
     function renderChecklist() {
         const checklist = [
             {
-                label:
-                    "Origen y destino",
-                valid:
-                    isSourceSelectionComplete(),
+                label: "Nombre del proceso",
+                valid: Boolean(elements.processName.value.trim()),
+                detail: elements.processName.value.trim() || "Obligatorio"
+            },
+            {
+                label: "Dominio",
+                valid: Boolean(elements.domainName.value.trim()),
+                detail: elements.domainName.value.trim() || "Obligatorio"
+            },
+            {
+                label: "Origen y destino",
+                valid: isSourceSelectionComplete(),
                 detail:
                     isSourceSelectionComplete()
-                        ? "Fuentes seleccionadas"
+                        ? "Tablas seleccionadas"
                         : "Pendiente"
             },
             {
-                label:
-                    "Metadata compatible",
-                valid:
-                    state.commonColumns.length > 0,
-                detail:
-                    `${state.commonColumns.length} columnas comunes`
+                label: "Metadata compatible",
+                valid: state.commonColumns.length > 0,
+                detail: `${state.commonColumns.length} columnas comunes`
             },
             {
-                label:
-                    "Clave de negocio",
-                valid:
-                    getSelectedBusinessKeys().length > 0,
-                detail:
-                    getSelectedBusinessKeys().join(", ")
-                    || "Pendiente"
+                label: "Métricas de conteo",
+                valid: getSelectedCountColumns().length > 0,
+                detail: `${getSelectedCountColumns().length} seleccionadas`
             },
             {
-                label:
-                    "Métricas",
-                valid:
-                    state.currentStep < 3
-                    || getSelectedSumColumns().length > 0
-                    || true,
-                detail:
-                    `${getSelectedSumColumns().length} métricas`
+                label: "Métricas de sumarización",
+                valid: getSelectedSumColumns().length > 0,
+                detail: `${getSelectedSumColumns().length} seleccionadas`
             },
             {
-                label:
-                    "Borrador",
-                valid:
-                    Boolean(state.draftId),
-                detail:
-                    state.draftId || "Pendiente"
+                label: "Borrador",
+                valid: Boolean(state.draftId),
+                detail: state.draftId || "Pendiente"
             },
             {
-                label:
-                    "Validación",
-                valid:
-                    isValidationSuccessful(),
+                label: "Validación",
+                valid: isValidationSuccessful(),
                 detail:
                     isValidationSuccessful()
                         ? "Válida"
@@ -1657,10 +1408,9 @@
             }
         ];
 
-        elements.checklist.innerHTML =
-            checklist.map(item => `
+        elements.checklist.innerHTML = checklist
+            .map(item => `
                 <div class="design-checklist-item">
-
                     <span class="${
                         item.valid
                             ? "checklist-success"
@@ -1670,22 +1420,16 @@
                     </span>
 
                     <div>
-                        <strong>
-                            ${escapeHtml(item.label)}
-                        </strong>
-
-                        <small>
-                            ${escapeHtml(item.detail)}
-                        </small>
+                        <strong>${escapeHtml(item.label)}</strong>
+                        <small>${escapeHtml(item.detail)}</small>
                     </div>
-
                 </div>
-            `).join("");
+            `)
+            .join("");
     }
 
     function updateActionState() {
-        elements.saveButton.disabled =
-            state.isSaving;
+        elements.saveButton.disabled = state.isSaving;
 
         elements.validateButton.disabled =
             state.isValidating
@@ -1693,25 +1437,36 @@
 
         elements.publishButton.disabled =
             state.isPublishing
-            || !isValidationSuccessful();
+            || (
+                !state.publishedResponse
+                && !isValidationSuccessful()
+            );
     }
 
     function handleConfigurationChange() {
-        invalidateDraft();
+        invalidateValidation();
+        renderSelectedMetricsSummary();
         renderChecklist();
-        persistLocalDraft();
+        persistLocalState();
     }
 
-    function invalidateDraft() {
+    function invalidateValidation() {
         state.validationResponse = null;
-        elements.validationSection.hidden =
-            true;
+        elements.validationSection.hidden = true;
     }
 
     function getSelectedBusinessKeys() {
         return Array.from(
             elements.businessKey.selectedOptions
         ).map(option => option.value);
+    }
+
+    function getSelectedCountColumns() {
+        return Array.from(
+            elements.countColumnsGrid.querySelectorAll(
+                'input[name="count-column"]:checked'
+            )
+        ).map(input => input.value);
     }
 
     function getSelectedSumColumns() {
@@ -1723,13 +1478,12 @@
     }
 
     function resolveValidationStatus(response) {
-        const status =
-            String(
-                response?.validation_status
-                || response?.status
-                || response?.draft_status
-                || ""
-            ).toUpperCase();
+        const status = String(
+            response?.validation_status
+            || response?.status
+            || response?.draft_status
+            || ""
+        ).toUpperCase();
 
         if (
             response?.valid === true
@@ -1767,92 +1521,54 @@
         );
     }
 
-    function persistLocalDraft() {
+    function persistLocalState() {
         sessionStorage.setItem(
             STORAGE_KEY,
             JSON.stringify({
-                currentStep:
-                    state.currentStep,
-
-                draftId:
-                    state.draftId,
-
-                validationResponse:
-                    state.validationResponse,
+                currentStep: state.currentStep,
+                draftId: state.draftId,
+                validationResponse: state.validationResponse,
 
                 values: {
-                    sourceConnection:
-                        elements.sourceConnection.value,
-
-                    sourceDataset:
-                        elements.sourceDataset.value,
-
-                    sourceTable:
-                        elements.sourceTable.value,
-
-                    targetConnection:
-                        elements.targetConnection.value,
-
-                    targetDataset:
-                        elements.targetDataset.value,
-
-                    targetTable:
-                        elements.targetTable.value,
-
-                    processName:
-                        elements.processName.value,
-
-                    domainName:
-                        elements.domainName.value,
-
-                    description:
-                        elements.description.value,
-
-                    requestedBy:
-                        elements.requestedBy.value,
-
-                    rowTolerance:
-                        elements.rowTolerance.value,
-
-                    amountTolerance:
-                        elements.amountTolerance.value,
-
-                    sourceFilter:
-                        elements.sourceFilter.value,
-
-                    targetFilter:
-                        elements.targetFilter.value
+                    processName: elements.processName.value,
+                    domainName: elements.domainName.value,
+                    description: elements.description.value,
+                    sourceConnection: elements.sourceConnection.value,
+                    sourceDataset: elements.sourceDataset.value,
+                    sourceTable: elements.sourceTable.value,
+                    sourceFilter: elements.sourceFilter.value,
+                    targetConnection: elements.targetConnection.value,
+                    targetDataset: elements.targetDataset.value,
+                    targetTable: elements.targetTable.value,
+                    targetFilter: elements.targetFilter.value,
+                    rowTolerance: elements.rowTolerance.value,
+                    countTolerance: elements.countTolerance.value,
+                    amountTolerance: elements.amountTolerance.value,
+                    requestedBy: elements.requestedBy.value
                 }
             })
         );
     }
 
-    function restoreLocalDraft() {
-        const raw =
-            sessionStorage.getItem(
-                STORAGE_KEY
-            );
+    function restoreLocalValues() {
+        const raw = sessionStorage.getItem(STORAGE_KEY);
 
         if (!raw) {
             return;
         }
 
         try {
-            const saved =
-                JSON.parse(raw);
-
-            state.draftId =
-                saved.draftId || null;
-
+            const saved = JSON.parse(raw);
+            state.draftId = saved.draftId || null;
             state.validationResponse =
-                saved.validationResponse
-                || null;
+                saved.validationResponse || null;
 
-            const values =
-                saved.values || {};
+            const values = saved.values || {};
 
             elements.processName.value =
-                values.processName || "";
+                values.processName
+                || elements.processName.value
+                || "Cuadratura dinámica";
 
             elements.domainName.value =
                 values.domainName || "";
@@ -1860,26 +1576,27 @@
             elements.description.value =
                 values.description || "";
 
-            elements.requestedBy.value =
-                values.requestedBy
-                || "julio.cordova@gmail.com";
-
-            elements.rowTolerance.value =
-                values.rowTolerance ?? 0;
-
-            elements.amountTolerance.value =
-                values.amountTolerance ?? 0;
-
             elements.sourceFilter.value =
                 values.sourceFilter || "";
 
             elements.targetFilter.value =
                 values.targetFilter || "";
 
+            elements.rowTolerance.value =
+                values.rowTolerance ?? 0;
+
+            elements.countTolerance.value =
+                values.countTolerance ?? 0;
+
+            elements.amountTolerance.value =
+                values.amountTolerance ?? 0;
+
+            elements.requestedBy.value =
+                values.requestedBy
+                || "julio.cordova@gmail.com";
+
         } catch {
-            sessionStorage.removeItem(
-                STORAGE_KEY
-            );
+            sessionStorage.removeItem(STORAGE_KEY);
         }
     }
 
@@ -1896,19 +1613,14 @@
             document.createElement("option");
 
         placeholderOption.value = "";
-        placeholderOption.textContent =
-            placeholder;
+        placeholderOption.textContent = placeholder;
 
-        select.appendChild(
-            placeholderOption
-        );
+        select.appendChild(placeholderOption);
 
-        const seen =
-            new Set();
+        const seen = new Set();
 
         values.forEach(item => {
-            const value =
-                valueResolver(item);
+            const value = valueResolver(item);
 
             if (!value || seen.has(value)) {
                 return;
@@ -1916,30 +1628,19 @@
 
             seen.add(value);
 
-            const option =
-                document.createElement("option");
-
+            const option = document.createElement("option");
             option.value = value;
-            option.textContent =
-                labelResolver(item)
-                || value;
-
+            option.textContent = labelResolver(item) || value;
             select.appendChild(option);
         });
     }
 
-    function setSelectLoading(
-        select,
-        text
-    ) {
+    function setSelectLoading(select, text) {
         resetSelect(select, text);
         select.disabled = true;
     }
 
-    function resetSelect(
-        select,
-        text
-    ) {
+    function resetSelect(select, text) {
         select.innerHTML =
             `<option value="">${escapeHtml(text)}</option>`;
     }
@@ -2019,11 +1720,7 @@
         }
 
         for (const key of keys) {
-            if (
-                Array.isArray(
-                    payload?.[key]
-                )
-            ) {
+            if (Array.isArray(payload?.[key])) {
                 return payload[key];
             }
         }
@@ -2031,20 +1728,20 @@
         return [];
     }
 
-    function selectMultipleValues(
-        select,
-        values
-    ) {
-        const selectedValues =
-            new Set(values);
+    function selectMultipleValues(select, values) {
+        const selectedValues = new Set(values);
 
-        Array.from(select.options)
-            .forEach(option => {
-                option.selected =
-                    selectedValues.has(
-                        option.value
-                    );
-            });
+        Array.from(select.options).forEach(option => {
+            option.selected = selectedValues.has(option.value);
+        });
+    }
+
+    function areTypesCompatible(sourceType, targetType) {
+        if (sourceType === targetType) {
+            return true;
+        }
+
+        return isNumericType(sourceType) && isNumericType(targetType);
     }
 
     function isNumericType(type) {
@@ -2056,9 +1753,15 @@
             "NUMERIC",
             "BIGNUMERIC",
             "DECIMAL"
-        ].some(value =>
-            String(type).includes(value)
-        );
+        ].some(value => String(type).includes(value));
+    }
+
+    function isStringType(type) {
+        return [
+            "STRING",
+            "VARCHAR",
+            "CHAR"
+        ].some(value => String(type).includes(value));
     }
 
     function isDateType(type) {
@@ -2066,22 +1769,17 @@
             "DATE",
             "DATETIME",
             "TIMESTAMP"
-        ].some(value =>
-            String(type).includes(value)
-        );
+        ].some(value => String(type).includes(value));
     }
 
     function isValidEmail(value) {
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-            .test(value);
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
     }
 
     function getSessionId() {
-        const key =
-            "dataOpsReconciliationWizardSession";
+        const key = "dataOpsReconciliationWizardSession";
 
-        let value =
-            sessionStorage.getItem(key);
+        let value = sessionStorage.getItem(key);
 
         if (!value) {
             value =
@@ -2089,51 +1787,37 @@
                     ? window.crypto.randomUUID()
                     : `SESSION_${Date.now()}`;
 
-            sessionStorage.setItem(
-                key,
-                value
-            );
+            sessionStorage.setItem(key, value);
         }
 
         return value;
     }
 
-    async function apiRequest(
-        url,
-        options = {}
-    ) {
-        const response =
-            await fetch(
-                url,
-                {
-                    ...options,
-                    headers: {
-                        Accept:
-                            "application/json",
-                        ...(options.headers || {})
-                    }
+    async function apiRequest(url, options = {}) {
+        const response = await fetch(
+            url,
+            {
+                ...options,
+                headers: {
+                    Accept: "application/json",
+                    ...(options.headers || {})
                 }
-            );
+            }
+        );
 
         const contentType =
-            response.headers.get(
-                "content-type"
-            ) || "";
+            response.headers.get("content-type") || "";
 
         const payload =
-            contentType.includes(
-                "application/json"
-            )
+            contentType.includes("application/json")
                 ? await response.json()
                 : {
-                    message:
-                        await response.text()
+                    message: await response.text()
                 };
 
         if (!response.ok) {
             throw new Error(
-                typeof payload.detail
-                    === "string"
+                typeof payload.detail === "string"
                     ? payload.detail
                     : payload.message
                     || `Error HTTP ${response.status}`
@@ -2157,16 +1841,6 @@
             "message wizard-message";
     }
 
-    function humanize(value) {
-        return String(value || "")
-            .replaceAll("_", " ")
-            .replace(
-                /\b\w/g,
-                character =>
-                    character.toUpperCase()
-            );
-    }
-
     function escapeHtml(value) {
         return String(value ?? "")
             .replaceAll("&", "&amp;")
@@ -2181,9 +1855,9 @@
     }
 
     initialize().catch(error => {
+        console.error(error);
         showMessage(
-            "No fue posible iniciar el wizard: "
-                + error.message,
+            "No fue posible iniciar el wizard: " + error.message,
             "error"
         );
     });

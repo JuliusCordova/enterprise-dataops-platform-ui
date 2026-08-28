@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import com.kyndryl.dataops.platform.integration.reconciliation.ReconciliationConfigurationClient;
 import com.kyndryl.dataops.platform.modules.reconciliation.dto.ReconciliationAskRequest;
 import com.kyndryl.dataops.platform.modules.reconciliation.dto.ReconciliationConfirmRequest;
 import com.kyndryl.dataops.platform.modules.reconciliation.dto.ReconciliationDraftCreateRequest;
@@ -21,11 +22,14 @@ public class ReconciliationService {
             ReconciliationService.class
         );
 
+    private final ReconciliationConfigurationClient configurationClient;
     private final DataOpsApiClient client;
 
     public ReconciliationService(
+        ReconciliationConfigurationClient configurationClient,
         DataOpsApiClient client
     ) {
+        this.configurationClient = configurationClient;
         this.client = client;
     }
 
@@ -34,9 +38,7 @@ public class ReconciliationService {
             "Consultando configuraciones de reconciliación"
         );
 
-        return client.get(
-            "/reconciliation/configs"
-        );
+        return configurationClient.listConfigurations();
     }
 
     public Map<String, Object> execute(
@@ -48,22 +50,13 @@ public class ReconciliationService {
             request.businessDate()
         );
 
-        return client.post(
-            "/reconciliation/execute",
-            request
-        );
+        return configurationClient.execute(request);
     }
 
     public Map<String, Object> getResult(
         String executionId
     ) {
-        return client.get(
-            "/reconciliation/result/"
-                + validateIdentifier(
-                    executionId,
-                    "executionId"
-                )
-        );
+        return configurationClient.getResult(executionId);
     }
 
     public Map<String, Object> getLatest(
@@ -162,34 +155,21 @@ public class ReconciliationService {
             request.targetTable()
         );
 
-        return client.post(
-            "/reconciliation/configure/draft",
-            request
-        );
+        return configurationClient.createDraft(request);
     }
 
     public Map<String, Object> getDraft(
         String draftId
     ) {
-        return client.get(
-            "/reconciliation/configure/draft/"
-                + validateIdentifier(
-                    draftId,
-                    "draftId"
-                )
-        );
+        return configurationClient.getDraft(draftId);
     }
 
     public Map<String, Object> updateDraft(
         String draftId,
         ReconciliationDraftUpdateRequest request
     ) {
-        return client.put(
-            "/reconciliation/configure/draft/"
-                + validateIdentifier(
-                    draftId,
-                    "draftId"
-                ),
+        return configurationClient.updateDraft(
+            draftId,
             request
         );
     }
@@ -197,26 +177,15 @@ public class ReconciliationService {
     public Map<String, Object> validateDraft(
         String draftId
     ) {
-        return client.post(
-            "/reconciliation/configure/validate/"
-                + validateIdentifier(
-                    draftId,
-                    "draftId"
-                ),
-            Map.of()
-        );
+        return configurationClient.validateDraft(draftId);
     }
 
     public Map<String, Object> confirmDraft(
         String draftId,
         ReconciliationConfirmRequest request
     ) {
-        return client.post(
-            "/reconciliation/configure/confirm/"
-                + validateIdentifier(
-                    draftId,
-                    "draftId"
-                ),
+        return configurationClient.publishDraft(
+            draftId,
             request
         );
     }

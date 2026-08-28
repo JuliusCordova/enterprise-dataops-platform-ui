@@ -61,11 +61,21 @@
 
                     </div>
 
-                    <span
-                        id="reconciliation-count"
-                        class="neutral-chip">
-                        0 configuraciones
-                    </span>
+                    <div class="catalog-header-actions">
+
+                        <span
+                            id="reconciliation-count"
+                            class="neutral-chip">
+                            0 configuraciones
+                        </span>
+
+                        <a
+                            class="enterprise-button enterprise-button-primary"
+                            th:href="@{/reconciliation/new}">
+                            + Nueva cuadratura
+                        </a>
+
+                    </div>
 
                 </header>
 
@@ -109,9 +119,15 @@
                     </strong>
 
                     <p>
-                        No se encontraron configuraciones activas
-                        en el backend.
+                        Crea una nueva cuadratura para comenzar
+                        a comparar origen y destino.
                     </p>
+
+                    <a
+                        class="enterprise-button enterprise-button-primary"
+                        th:href="@{/reconciliation/new}">
+                        Crear primera cuadratura
+                    </a>
 
                 </div>
 
@@ -162,19 +178,25 @@
                         class="selected-config-summary"
                         hidden>
 
-                        <span>Proceso</span>
+                        <span>
+                            Proceso
+                        </span>
 
                         <strong id="selected-reconciliation-name">
                             —
                         </strong>
 
-                        <span>Origen</span>
+                        <span>
+                            Origen
+                        </span>
 
                         <strong id="selected-reconciliation-source">
                             —
                         </strong>
 
-                        <span>Destino</span>
+                        <span>
+                            Destino
+                        </span>
 
                         <strong id="selected-reconciliation-target">
                             —

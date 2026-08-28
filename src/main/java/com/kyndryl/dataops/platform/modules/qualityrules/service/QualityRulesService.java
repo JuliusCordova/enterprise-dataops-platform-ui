@@ -6,10 +6,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import com.kyndryl.dataops.platform.integration.quality.QualityConfigurationClient;
 import com.kyndryl.dataops.platform.modules.qualityrules.dto.QualityRuleConfirmRequest;
 import com.kyndryl.dataops.platform.modules.qualityrules.dto.QualityRuleDraftRequest;
 import com.kyndryl.dataops.platform.modules.qualityrules.dto.QualityRuleDraftUpdateRequest;
-import com.kyndryl.dataops.platform.shared.client.DataOpsApiClient;
 
 @Service
 public class QualityRulesService {
@@ -19,12 +19,12 @@ public class QualityRulesService {
             QualityRulesService.class
         );
 
-    private final DataOpsApiClient client;
+    private final QualityConfigurationClient configurationClient;
 
     public QualityRulesService(
-        DataOpsApiClient client
+        QualityConfigurationClient configurationClient
     ) {
-        this.client = client;
+        this.configurationClient = configurationClient;
     }
 
     public Map<String, Object> getRuleTypes() {
@@ -32,9 +32,7 @@ public class QualityRulesService {
             "Consultando catálogo de reglas de calidad"
         );
 
-        return client.get(
-            "/data-quality/rule-types"
-        );
+        return configurationClient.listRuleTypes();
     }
 
     public Map<String, Object> createDraft(
@@ -48,34 +46,21 @@ public class QualityRulesService {
             request.rules().size()
         );
 
-        return client.post(
-            "/data-quality/configure/draft",
-            request
-        );
+        return configurationClient.createDraft(request);
     }
 
     public Map<String, Object> getDraft(
         String draftId
     ) {
-        return client.get(
-            "/data-quality/configure/draft/"
-                + validateIdentifier(
-                    draftId,
-                    "draftId"
-                )
-        );
+        return configurationClient.getDraft(draftId);
     }
 
     public Map<String, Object> updateDraft(
         String draftId,
         QualityRuleDraftUpdateRequest request
     ) {
-        return client.put(
-            "/data-quality/configure/draft/"
-                + validateIdentifier(
-                    draftId,
-                    "draftId"
-                ),
+        return configurationClient.updateDraft(
+            draftId,
             request
         );
     }
@@ -83,55 +68,16 @@ public class QualityRulesService {
     public Map<String, Object> validateDraft(
         String draftId
     ) {
-        return client.post(
-            "/data-quality/configure/validate/"
-                + validateIdentifier(
-                    draftId,
-                    "draftId"
-                ),
-            Map.of()
-        );
+        return configurationClient.validateDraft(draftId);
     }
 
     public Map<String, Object> confirmDraft(
         String draftId,
         QualityRuleConfirmRequest request
     ) {
-        return client.post(
-            "/data-quality/configure/confirm/"
-                + validateIdentifier(
-                    draftId,
-                    "draftId"
-                ),
+        return configurationClient.publishDraft(
+            draftId,
             request
         );
-    }
-
-    private String validateIdentifier(
-        String value,
-        String fieldName
-    ) {
-        if (
-            value == null
-            || value.isBlank()
-        ) {
-            throw new IllegalArgumentException(
-                fieldName + " no puede estar vacío"
-            );
-        }
-
-        String normalized =
-            value.trim();
-
-        if (!normalized.matches(
-            "[A-Za-z0-9_\\-]+"
-        )) {
-            throw new IllegalArgumentException(
-                fieldName
-                    + " contiene caracteres no permitidos"
-            );
-        }
-
-        return normalized;
     }
 }

@@ -21,25 +21,29 @@ public record ReconciliationDraftUpdateRequest(
     @JsonProperty("date_column")
     String dateColumn,
 
+    @JsonProperty("count_columns")
+    List<String> countColumns,
+
     @JsonProperty("sum_columns")
     List<String> sumColumns,
 
     @JsonProperty("row_tolerance")
     Long rowTolerance,
 
+    @JsonProperty("count_tolerance")
+    Long countTolerance,
+
     @JsonProperty("amount_tolerance")
     Double amountTolerance
 
 ) {
     public ReconciliationDraftUpdateRequest {
-        businessKey =
-            businessKey == null
-                ? List.of()
-                : List.copyOf(businessKey);
+        businessKey = businessKey == null ? List.of() : List.copyOf(businessKey);
+        countColumns = countColumns == null ? List.of() : List.copyOf(countColumns);
+        sumColumns = sumColumns == null ? List.of() : List.copyOf(sumColumns);
 
-        sumColumns =
-            sumColumns == null
-                ? List.of()
-                : List.copyOf(sumColumns);
+        rowTolerance = rowTolerance == null ? 0L : Math.max(0L, rowTolerance);
+        countTolerance = countTolerance == null ? 0L : Math.max(0L, countTolerance);
+        amountTolerance = amountTolerance == null ? 0.0 : Math.max(0.0, amountTolerance);
     }
 }
